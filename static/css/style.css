@@ -2197,3 +2197,84 @@ button,input{
   border-color: var(--gold);
   color: #ffffff;
 }
+
+/* Remove browser click/tap highlight overlay and default outline styling */
+.chart-stage,
+.chart,
+canvas,
+svg,
+.planet,
+.rashiLabel,
+.nakLabel,
+.houseLabel,
+.modeBtn,
+.filter-chip,
+.chip,
+.cardChip,
+#askOracleBtn,
+.oraclePill,
+#reveal,
+.revealBtn,
+button,
+a {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Prevent text/element selection on chart layers */
+.chart-stage,
+.chart,
+.planet,
+.rashiLabel,
+.nakLabel,
+.houseLabel,
+svg,
+canvas {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Prevent drag ghosting on SVGs and images */
+svg, img {
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+}
+
+/* Custom interactive accessibility outline handling */
+button:focus,
+a:focus,
+input:focus,
+textarea:focus,
+select:focus,
+.planet:focus,
+.rashiLabel:focus,
+.nakLabel:focus,
+.houseLabel:focus,
+.modeBtn:focus,
+.filter-chip:focus,
+.chip:focus,
+.cardChip:focus,
+[tabindex]:focus {
+  outline: none !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.planet:focus-visible,
+.rashiLabel:focus-visible,
+.nakLabel:focus-visible,
+.houseLabel:focus-visible,
+.modeBtn:focus-visible,
+.filter-chip:focus-visible,
+.chip:focus-visible,
+.cardChip:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--gold, #f4c978) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 3px rgba(244, 201, 120, 0.25) !important;
+}
