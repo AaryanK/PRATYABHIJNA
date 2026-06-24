@@ -86,16 +86,9 @@
 
         <!-- Interactive Sidereal Mandala Chart -->
         <section class="mandala" id="mandala">
-            <div class="chart" id="chart">
+            <div class="chart chart-stage" id="chart">
                 <!-- Rotating Decorative Coordinate Rings -->
                 <div class="chartAura" id="chartAura"></div>
-                
-                <!-- Concentric Rings -->
-                <div class="ring"></div>
-                <div class="ring r2"></div>
-                <div class="ring r3"></div>
-                <div class="ring r4"></div>
-                <div class="ring r5"></div>
                 
                 <!-- Pulsing Central Bindu -->
                 <div class="bindu" id="bindu"></div>
@@ -115,6 +108,14 @@
                             </feMerge>
                         </filter>
                     </defs>
+                    <!-- Concentric Rings in SVG space sharing exact center (400, 400) -->
+                    <g id="chartRings">
+                        <circle cx="400" cy="400" r="368" class="svg-ring r1" />
+                        <circle cx="400" cy="400" r="344" class="svg-ring r2" />
+                        <circle cx="400" cy="400" r="304" class="svg-ring r3" />
+                        <circle cx="400" cy="400" r="240" class="svg-ring r4" />
+                        <circle cx="400" cy="400" r="192" class="svg-ring r5" />
+                    </g>
                     <g id="focusWedges"></g>
                 </svg>
             </div>

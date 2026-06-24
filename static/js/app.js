@@ -102,6 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let revealed = false;
     let stars = [];
     let dust = [];
+    let chartCx = window.innerWidth / 2;
+    let chartCy = window.innerHeight / 2;
 
     // Faint golden dust particles near the chart center
     class DustParticle {
@@ -111,8 +113,8 @@ document.addEventListener("DOMContentLoaded", () => {
         reset() {
             const angle = Math.random() * Math.PI * 2;
             const radius = Math.random() * 90 + 30; // spawn near chart core
-            this.x = W / 2 + Math.cos(angle) * radius;
-            this.y = H / 2 + Math.sin(angle) * radius;
+            this.x = chartCx + Math.cos(angle) * radius;
+            this.y = chartCy + Math.sin(angle) * radius;
             this.size = Math.random() * 0.75 + 0.15;
             this.alpha = Math.random() * 0.4 + 0.1;
             this.speed = Math.random() * 0.1 + 0.02;
@@ -126,20 +128,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 this.x += Math.cos(state.axisFlowAngle) * speed;
                 this.y += Math.sin(state.axisFlowAngle) * speed;
                 
-                const dist = Math.hypot(this.x - W / 2, this.y - H / 2);
+                const dist = Math.hypot(this.x - chartCx, this.y - chartCy);
                 if (dist > Math.min(W, H) * 0.45) {
                     const t = Math.random() * 2 - 1;
                     const R = Math.min(W, H) * 0.4 * t;
-                    this.x = W / 2 + Math.cos(state.axisFlowAngle) * R;
-                    this.y = H / 2 + Math.sin(state.axisFlowAngle) * R;
+                    this.x = chartCx + Math.cos(state.axisFlowAngle) * R;
+                    this.y = chartCy + Math.sin(state.axisFlowAngle) * R;
                     this.size = Math.random() * 1.5 + 0.4;
                     this.alpha = Math.random() * 0.7 + 0.2;
                 }
             } else {
                 this.angle += 0.0008;
-                const radius = Math.hypot(this.x - W / 2, this.y - H / 2) + 0.12; // slowly drift outwards
-                this.x = W / 2 + Math.cos(this.angle) * radius;
-                this.y = H / 2 + Math.sin(this.angle) * radius;
+                const radius = Math.hypot(this.x - chartCx, this.y - chartCy) + 0.12; // slowly drift outwards
+                this.x = chartCx + Math.cos(this.angle) * radius;
+                this.y = chartCy + Math.sin(this.angle) * radius;
                 this.alpha = (0.15 + Math.sin(this.tw) * 0.15);
                 this.tw += 0.008;
                 
@@ -176,6 +178,13 @@ document.addEventListener("DOMContentLoaded", () => {
         dust = [];
         for (let i = 0; i < 45; i++) {
             dust.push(new DustParticle());
+        }
+
+        if (revealed) {
+            buildChart(true);
+            if (state.currentMode === 'aspect') {
+                redrawAspectArcs();
+            }
         }
     }
     window.addEventListener('resize', resize);
@@ -309,15 +318,23 @@ document.addEventListener("DOMContentLoaded", () => {
         if (skyAlpha <= 0.01) return;
         ctx.save();
         ctx.globalAlpha = skyAlpha * 0.55;
-        const cx = W / 2;
-        const cy = H / 2;
-        const R = Math.min(W, H) * 0.39;
+        
+        const cx = chartCx;
+        const cy = chartCy;
+        const chartEl = document.getElementById('chart');
+        let R = Math.min(W, H) * 0.39;
+        if (chartEl) {
+            const rect = chartEl.getBoundingClientRect();
+            if (rect.width > 0) {
+                R = rect.width * 0.46;
+            }
+        }
         
         for (let i = 0; i < 108; i++) {
             const a = i * Math.PI * 2 / 108 - Math.PI / 2 + earthSpin * 0.04;
             const len = i % 9 === 0 ? R : R * 0.98;
             ctx.beginPath();
-            ctx.moveTo(cx + Math.cos(a) * R * 0.24, cy + Math.sin(a) * R * 0.24);
+            ctx.moveTo(cx + Math.cos(a) * R * 0.52, cy + Math.sin(a) * R * 0.52);
             ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
             ctx.strokeStyle = i % 9 === 0 ? 'rgba(244,201,120,.13)' : 'rgba(127,255,242,.045)';
             ctx.stroke();
@@ -329,7 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.stroke();
         
         ctx.beginPath();
-        ctx.arc(cx, cy, R * 0.62, 0, Math.PI * 2);
+        ctx.arc(cx, cy, R * 0.652, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(216,197,255,.09)';
         ctx.stroke();
         ctx.restore();
@@ -338,6 +355,19 @@ document.addEventListener("DOMContentLoaded", () => {
     function animate() {
         ctx.clearRect(0, 0, W, H);
         drawStars();
+        
+        // Update chart center dynamically based on physical DOM element positioning
+        const chartEl = document.getElementById('chart');
+        if (chartEl && revealed) {
+            const rect = chartEl.getBoundingClientRect();
+            if (rect.width > 0) {
+                chartCx = rect.left + rect.width / 2;
+                chartCy = rect.top + rect.height / 2;
+            }
+        } else {
+            chartCx = W / 2;
+            chartCy = H / 2;
+        }
         
         // Update and draw golden dust particles near mandala core
         if (revealed) {
@@ -880,7 +910,7 @@ function signIndexForHouse(houseNumber) {
     function renderSectorWedges() {
         const svg = document.getElementById('chartOverlay');
         
-        // 1. Render House wedges (inner area: 64 to 256)
+        // 1. Render House wedges (inner area: 88 to 240)
         let gHouses = document.getElementById('houseWedges');
         if (!gHouses) {
             gHouses = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -895,7 +925,7 @@ function signIndexForHouse(houseNumber) {
             const houseNum = houseForSignIndex(i);
             const startAngle = i * 30;
             const endAngle = (i + 1) * 30;
-            const d = createWedgePath(400, 400, 64, 256, startAngle, endAngle);
+            const d = createWedgePath(400, 400, 88, 240, startAngle, endAngle);
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", d);
             path.setAttribute("class", "houseWedge");
@@ -916,7 +946,7 @@ function signIndexForHouse(houseNumber) {
             gHouses.appendChild(path);
         }
 
-        // 2. Render Rashi wedges (outer ring: 256 to 400)
+        // 2. Render Rashi wedges (outer ring: 240 to 344)
         let gWedges = document.getElementById('rashiWedges');
         if (!gWedges) {
             gWedges = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -930,7 +960,7 @@ function signIndexForHouse(houseNumber) {
         for (let i = 0; i < 12; i++) {
             const startAngle = i * 30;
             const endAngle = (i + 1) * 30;
-            const d = createWedgePath(400, 400, 256, 400, startAngle, endAngle);
+            const d = createWedgePath(400, 400, 240, 344, startAngle, endAngle);
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", d);
             path.setAttribute("class", "rashiWedge");
@@ -1092,7 +1122,7 @@ function signIndexForHouse(houseNumber) {
         const startAngle = idx * nakSize;
         const endAngle = (idx + 1) * nakSize;
 
-        highlightSector(startAngle, endAngle, 336, 400, "cyan-wedge");
+        highlightSector(startAngle, endAngle, 360, 396, "cyan-wedge");
 
         document.querySelectorAll('.nakLabel').forEach(l => {
             if (l.dataset.name === NAKSHATRA_SHORT_NAMES[idx] || l.dataset.name === NAKSHATRA_FULL_NAMES[idx]) {
@@ -1120,35 +1150,51 @@ function signIndexForHouse(houseNumber) {
         const activeNakIndices = new Set(
             state.placements.map(g => getNakshatraIndex(g.nakshatra)).filter(idx => idx !== -1)
         );
-        const anchors = [0, 9, 18]; // Aśvinī, Maghā, Mūla
+
+        const width = window.innerWidth;
+        const useAbbr = width < 768;
 
         for (let i = 0; i < 27; i++) {
-            const nakName = NAKSHATRA_SHORT_NAMES[i];
-            const isWordActive = activeNakIndices.has(i);
-            const isAnchor = anchors.includes(i);
-            
-            if (mode === 'all' || isWordActive || isAnchor) {
-                const r = (mode === 'all') ? 0.535 : 0.52;
-                const angle = i * nakSize + nakSize / 2;
-                const p = localXY(angle, r);
-                
-                const l = document.createElement('div');
-                l.className = 'nakLabel';
-                l.textContent = nakName;
-                l.dataset.name = NAKSHATRA_SHORT_NAMES[i];
-                l.dataset.index = i;
-                
-                const rot = angle - 90;
-                l.style.setProperty('--rot', `${rot}deg`);
-                l.style.left = p.x + '%';
-                l.style.top = p.y + '%';
-                
-                if (isWordActive) {
-                    l.classList.add('active');
-                }
-                
-                chart.appendChild(l);
+            let nakName = NAKSHATRA_SHORT_NAMES[i];
+            if (useAbbr) {
+                const NAK_ABBR_UNICODE = [
+                    "Aśv", "Bha", "Kṛt", "Roh", "Mṛg", "Ārd", "Pun", "Puṣ", "Āśl",
+                    "Mag", "P.Ph", "U.Ph", "Has", "Cit", "Svā", "Viś", "Anu", "Jye",
+                    "Mūl", "P.Āṣ", "U.Āṣ", "Śra", "Dha", "Śat", "P.Bh", "U.Bh", "Rev"
+                ];
+                nakName = NAK_ABBR_UNICODE[i];
             }
+            const isWordActive = activeNakIndices.has(i);
+            
+            const r = 0.445; // Centered between nakshatraR (0.43) and outerR (0.46)
+            const angle = i * nakSize + nakSize / 2;
+            const p = localXY(angle, r);
+            
+            const l = document.createElement('div');
+            l.className = 'nakLabel';
+            l.textContent = nakName;
+            l.dataset.name = NAKSHATRA_SHORT_NAMES[i];
+            l.dataset.index = i;
+            
+            // Premium radial alignment with readability flip
+            let rot = angle - 90;
+            rot = ((rot + 180) % 360 + 360) % 360 - 180;
+            if (rot > 90 || rot < -90) {
+                rot += 180;
+            }
+            
+            l.style.setProperty('--rot', `${rot}deg`);
+            l.style.left = p.x + '%';
+            l.style.top = p.y + '%';
+            
+            if (isWordActive) {
+                l.classList.add('active');
+            }
+            if (mode === 'all') {
+                l.classList.add('bright');
+            }
+            
+            chart.appendChild(l);
         }
     }
 
@@ -1179,17 +1225,16 @@ function signIndexForHouse(houseNumber) {
     const g = state.placements.find(p => p.name === name);
     if (!g) return { x: 400, y: 400 };
 
-    // Safe normalized orbital radii
+    // Safe normalized orbital radii (matches 192 to 240 orbit zone)
     const defaultRadius =
-        name === "Lagna" ? 0.33 :
-        (name === "Rahu" || name === "Ketu") ? 0.35 :
-        0.38;
+        name === "Lagna" ? 0.25 :
+        (name === "Rahu" || name === "Ketu") ? 0.27 :
+        0.29;
 
     let r = Number(g.staggerRadius);
 
     // If staggerRadius is missing, NaN, or suspiciously large, ignore it.
-    // Valid chart radii should be small normalized values like 0.33–0.42.
-    if (!Number.isFinite(r) || r < 0.20 || r > 0.50) {
+    if (!Number.isFinite(r) || r < 0.15 || r > 0.35) {
         r = defaultRadius;
     }
 
@@ -1954,35 +1999,88 @@ function signIndexForHouse(houseNumber) {
         tooltip.classList.add('show');
     }
 
-    function buildChart() {
-    if (chart.dataset.built) return;
+    function drawSectorsInSvg() {
+        const svg = document.getElementById('chartOverlay');
+        let gSectors = document.getElementById('chartSectors');
+        if (!gSectors) {
+            gSectors = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gSectors.setAttribute("id", "chartSectors");
+            const focusW = document.getElementById('focusWedges');
+            svg.insertBefore(gSectors, focusW);
+        } else {
+            gSectors.innerHTML = '';
+        }
 
-    // Hard repair bridge: dummy data and real API data become the same visual schema.
-    state.placements = state.placements.map(normalizePlacement).filter(Boolean);
+        // Draw 12 Rashi sectors (from r=240 to r=368 in 800x800 space)
+        for (let i = 0; i < 12; i++) {
+            const deg = i * 30;
+            const a = (deg - 90) * Math.PI / 180;
+            const x1 = 400 + Math.cos(a) * 240;
+            const y1 = 400 + Math.sin(a) * 240;
+            const x2 = 400 + Math.cos(a) * 368;
+            const y2 = 400 + Math.sin(a) * 368;
 
-    console.table(state.placements.map(p => ({
-        name: p.name,
-        absolute_longitude: p.absolute_longitude,
-        degree: p.degree,
-        sign_degree: p.sign_degree,
-        sign: p.sign,
-        house: p.house,
-        nakshatra: p.nakshatra,
-        pada: p.pada
-    })));
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("class", "rashi-sector-line");
+            gSectors.appendChild(line);
+        }
 
-    console.table(state.placements.map(p => ({
-    name: p.name,
-    lon: p.absolute_longitude,
-    house: p.house,
-    staggerRadius: p.staggerRadius
-})));
+        // Draw 27 Nakshatra sectors (from r=344 to r=368)
+        const nakSize = 360 / 27;
+        for (let i = 0; i < 27; i++) {
+            const deg = i * nakSize;
+            const a = (deg - 90) * Math.PI / 180;
+            const x1 = 400 + Math.cos(a) * 344;
+            const y1 = 400 + Math.sin(a) * 344;
+            const x2 = 400 + Math.cos(a) * 368;
+            const y2 = 400 + Math.sin(a) * 368;
 
-    chart.dataset.built = '1';
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("class", "nakshatra-sector-line");
+            gSectors.appendChild(line);
+        }
+    }
+
+    function buildChart(isResize = false) {
+        // Clear previously generated labels and planet elements to allow clean recalculation
+        document.querySelectorAll('.rashiLabel, .houseLabel, .nakLabel, .planet').forEach(el => el.remove());
+        const nodeAxis = document.getElementById('nodeAxis');
+        if (nodeAxis) nodeAxis.classList.remove('on');
+
+        // Hard repair bridge: dummy data and real API data become the same visual schema.
+        state.placements = state.placements.map(normalizePlacement).filter(Boolean);
+
+        console.table(state.placements.map(p => ({
+            name: p.name,
+            absolute_longitude: p.absolute_longitude,
+            degree: p.degree,
+            sign_degree: p.sign_degree,
+            sign: p.sign,
+            house: p.house,
+            nakshatra: p.nakshatra,
+            pada: p.pada
+        })));
+
+        console.table(state.placements.map(p => ({
+            name: p.name,
+            lon: p.absolute_longitude,
+            house: p.house,
+            staggerRadius: p.staggerRadius
+        })));
+
+        chart.dataset.built = '1';
 
         // 0. Reveal birthplace observer label and fade after 4.5s
         const obsLabel = document.getElementById('observerLabel');
-        if (obsLabel) {
+        if (obsLabel && !isResize) {
             const placeVal = document.getElementById('place').value || 'Kathmandu, Nepal';
             obsLabel.textContent = `Observer Point · ${placeVal}`;
             obsLabel.classList.add('show');
@@ -1993,47 +2091,58 @@ function signIndexForHouse(houseNumber) {
 
         // 1. Render Sign background wedges in SVG
         renderSectorWedges();
+        drawSectorsInSvg();
 
-        // Stagger show concentric rings
-        const rings = document.querySelectorAll(".ring");
+        // Stagger show SVG concentric rings
+        const rings = document.querySelectorAll(".svg-ring");
         rings.forEach((ring, idx) => {
-            ring.style.opacity = 0;
-            ring.style.transition = `opacity 1.5s cubic-bezier(0.1, 0.8, 0.2, 1) ${idx * 160}ms`;
-            setTimeout(() => { ring.style.opacity = 1; }, 50);
+            if (isResize) {
+                ring.style.transition = 'none';
+                ring.style.opacity = 1;
+            } else {
+                ring.style.opacity = 0;
+                ring.style.transition = `opacity 1.5s cubic-bezier(0.1, 0.8, 0.2, 1) ${idx * 160}ms`;
+                setTimeout(() => { ring.style.opacity = 1; }, 50);
+            }
         });
 
-        // 2. Draw 12 Rashi sectors & boundary lines & house labels & rashi labels
+        // 2. Draw 12 Rashi labels & house labels
         for (let i = 0; i < 12; i++) {
-            const s = document.createElement('div');
-            s.className = 'sector';
-            s.style.transform = `translate(-50%,-100%) rotate(${i * 30}deg) scaleY(0)`;
-            s.style.opacity = 0;
-            s.style.transition = `transform 1.6s cubic-bezier(0.16, 1, 0.3, 1) ${600 + i * 80}ms, opacity 1.2s ease ${600 + i * 80}ms`;
-            chart.appendChild(s);
-            setTimeout(() => {
-                s.style.transform = `translate(-50%,-100%) rotate(${i * 30}deg) scaleY(1)`;
-                s.style.opacity = 0.58;
-            }, 50);
-
-            // Rashi label positioned at r = 0.465
-            const p = localXY(i * 30 + 15, 0.465);
+            // Rashi label positioned at r = 0.405 (centered inside rashiR-nakshatraR zone)
+            const p = localXY(i * 30 + 15, 0.405);
             const l = document.createElement('div');
             l.className = 'rashiLabel';
             l.textContent = rashis[i];
             l.style.left = p.x + '%';
             l.style.top = p.y + '%';
-            l.style.opacity = 0;
-            l.style.transition = `opacity 1.2s ease ${800 + i * 40}ms`;
+            
+            if (isResize) {
+                l.style.transition = 'none';
+                l.style.opacity = state.currentMode === 'nak' ? 0.12 : 1;
+            } else {
+                l.style.opacity = 0;
+                l.style.transition = `opacity 1.2s ease ${800 + i * 40}ms`;
+                setTimeout(() => { l.style.opacity = 1; }, 50);
+            }
+            
+            // Radial rotation with right-side-up flip
+            const angle = i * 30 + 15;
+            let rot = angle - 90;
+            rot = ((rot + 180) % 360 + 360) % 360 - 180;
+            if (rot > 90 || rot < -90) {
+                rot += 180;
+            }
+            l.style.setProperty('--rot', `${rot}deg`);
+            
             chart.appendChild(l);
-            setTimeout(() => { l.style.opacity = 1; }, 50);
             
             l.addEventListener("click", () => {
                 highlightRashiSector(i, rashis[i]);
             });
 
-            // House label (whole-sign Scorpio Lagna) positioned at r = 0.20
+            // House label positioned at r = 0.34 (centered inside houseR-rashiR zone)
             const houseNum = houseForSignIndex(i);
-            const hPos = localXY(i * 30 + 15, 0.20);
+            const hPos = localXY(i * 30 + 15, 0.34);
             const hl = document.createElement('div');
             hl.className = 'houseLabel';
             hl.dataset.house = houseNum;
@@ -2041,33 +2150,28 @@ function signIndexForHouse(houseNumber) {
             hl.textContent = `H${houseNum}`;
             hl.style.left = hPos.x + '%';
             hl.style.top = hPos.y + '%';
-            hl.style.opacity = 0;
-            hl.style.transition = `opacity 1.2s ease ${850 + i * 40}ms`;
+            
+            if (isResize) {
+                hl.style.transition = 'none';
+                hl.style.opacity = 0.4;
+            } else {
+                hl.style.opacity = 0;
+                hl.style.transition = `opacity 1.2s ease ${850 + i * 40}ms`;
+                setTimeout(() => { hl.style.opacity = 0.4; }, 50);
+            }
             chart.appendChild(hl);
-            setTimeout(() => { hl.style.opacity = 0.4; }, 50);
         }
 
-        // 3. Draw 27 Nakshatra sectors
-        const nakSize = 360 / 27;
-        for (let i = 0; i < 27; i++) {
-            const s = document.createElement('div');
-            s.className = 'nakSector';
-            s.style.transform = `translate(-50%,-100%) rotate(${i * nakSize}deg) scaleY(0)`;
-            s.style.opacity = 0;
-            s.style.transition = `transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) ${1000 + i * 40}ms, opacity 0.8s ease ${1000 + i * 40}ms`;
-            chart.appendChild(s);
-            setTimeout(() => {
-                s.style.transform = `translate(-50%,-100%) rotate(${i * nakSize}deg) scaleY(1)`;
-                s.style.opacity = 0.50;
-            }, 50);
+        // 3. Render all 27 Nakshatra labels around the chart
+        renderNakshatraLabels(state.currentMode === 'nak' ? 'all' : 'default');
+        if (state.currentMode === 'nak') {
+            document.querySelectorAll('.rashiLabel').forEach(l => l.style.opacity = '0.12');
         }
 
-        // Initial nakshatra labels render
-        renderNakshatraLabels('default');
-
-        // Resolve staggering coordinates for close planets
+        // Resolve staggering coordinates for close planets (matches orbitR to houseR planet zone)
         state.placements.forEach(p => {
-            p.staggerRadius = (p.name === 'Rahu' || p.name === 'Ketu') ? 0.35 : 0.38;
+            p.staggerRadius = (p.name === 'Lagna') ? 0.25 : 
+                              (p.name === 'Rahu' || p.name === 'Ketu') ? 0.27 : 0.29;
             p.labelOffsetY = 0;
         });
 
@@ -2080,11 +2184,22 @@ function signIndexForHouse(houseNumber) {
                 const diff = Math.abs(p1.absolute_longitude - p2.absolute_longitude);
                 const angularDistance = diff > 180 ? 360 - diff : diff;
                 
-                if (angularDistance < 10 && Math.abs(p1.staggerRadius - p2.staggerRadius) < 0.01) {
+                if (angularDistance < 8 && Math.abs(p1.staggerRadius - p2.staggerRadius) < 0.01) {
                     staggerCount++;
-                    p2.staggerRadius += 0.038 * staggerCount;
-                    p2.labelOffsetY = 16 * staggerCount;
+                    p2.staggerRadius -= 0.02 * staggerCount; // stagger inward
+                    if (p2.staggerRadius < 0.24) p2.staggerRadius = 0.24; // cap at 0.24 orbit boundary
+                    p2.labelOffsetY = 14 * staggerCount;
                 }
+            }
+        }
+
+        // Calculate current timeline transit offset angle if active
+        let offsetAngle = 0;
+        if (state.currentMode === "transit") {
+            const knob = document.querySelector('.knob');
+            if (knob) {
+                const knobLeft = parseFloat(knob.style.left) || 38;
+                offsetAngle = (knobLeft / 100 - 0.38) * 60;
             }
         }
 
@@ -2093,30 +2208,39 @@ function signIndexForHouse(houseNumber) {
         if (lagna) {
             const lagnaEl = document.querySelector('.lagna');
             if (lagnaEl) {
-                const p = localXY(lagna.absolute_longitude, lagna.staggerRadius || 0.33);
+                const p = localXY(lagna.absolute_longitude, lagna.staggerRadius || 0.25);
                 lagnaEl.style.left = p.x + '%';
                 lagnaEl.style.top = p.y + '%';
-                lagnaEl.style.opacity = 0;
-                lagnaEl.style.transform = 'translate(-50%, -50%) scale(0.5)';
-                lagnaEl.style.transition = `left 1.7s cubic-bezier(.16,.86,.22,1), top 1.7s cubic-bezier(.16,.86,.22,1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 1500ms, opacity 1.5s ease 1500ms`;
+                
+                if (isResize) {
+                    lagnaEl.style.transition = 'none';
+                    lagnaEl.style.opacity = 1;
+                    lagnaEl.style.transform = 'translate(-50%, -50%) scale(1)';
+                } else {
+                    lagnaEl.style.opacity = 0;
+                    lagnaEl.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                    lagnaEl.style.transition = `left 1.7s cubic-bezier(.16,.86,.22,1), top 1.7s cubic-bezier(.16,.86,.22,1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 1500ms, opacity 1.5s ease 1500ms`;
+                    setTimeout(() => {
+                        lagnaEl.style.opacity = 1;
+                        lagnaEl.style.transform = 'translate(-50%, -50%) scale(1)';
+                    }, 100);
+                }
                 
                 lagna.el = lagnaEl;
 
-                lagnaEl.addEventListener('mouseenter', () => {
-                    showCard(lagna);
-                    highlightGrahaContext(lagna);
-                });
-                lagnaEl.addEventListener('mouseleave', () => {
-                    clearGrahaContext();
-                });
-                lagnaEl.addEventListener('click', () => {
-                    focusGraha("Lagna");
-                });
-
-                setTimeout(() => {
-                    lagnaEl.style.opacity = 1;
-                    lagnaEl.style.transform = 'translate(-50%, -50%) scale(1)';
-                }, 100);
+                if (!lagnaEl.dataset.listened) {
+                    lagnaEl.dataset.listened = '1';
+                    lagnaEl.addEventListener('mouseenter', () => {
+                        showCard(lagna);
+                        highlightGrahaContext(lagna);
+                    });
+                    lagnaEl.addEventListener('mouseleave', () => {
+                        clearGrahaContext();
+                    });
+                    lagnaEl.addEventListener('click', () => {
+                        focusGraha("Lagna");
+                    });
+                }
             }
         }
 
@@ -2165,7 +2289,8 @@ function signIndexForHouse(houseNumber) {
             body.appendChild(nameLabel);
 
             // Outward vector translation for label to avoid overlaps
-            const aRad = (g.absolute_longitude - 90) * Math.PI / 180;
+            const targetAngle = g.name === "Lagna" ? g.absolute_longitude : g.absolute_longitude + offsetAngle;
+            const aRad = (targetAngle - 90) * Math.PI / 180;
             const labelDist = 24 + (g.labelOffsetY || 0);
             const offsetX = Math.cos(aRad) * labelDist;
             const offsetY = Math.sin(aRad) * labelDist;
@@ -2173,19 +2298,6 @@ function signIndexForHouse(houseNumber) {
 
             chart.appendChild(el);
             g.el = el;
-
-            // Start coordinates in outer space bounds
-            const startAngle = g.absolute_longitude + (Math.random() * 120 - 60);
-            const startRadius = 1.35 + Math.random() * 0.45;
-            const start = localXY(startAngle, startRadius);
-            el.style.left = start.x + '%';
-            el.style.top = start.y + '%';
-            el.style.opacity = 0;
-            el.style.transform = 'translate(-50%, -50%) scale(0.3)';
-            el.style.transition = `left 2.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + idx * 150}ms, 
-                                   top 2.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + idx * 150}ms, 
-                                   opacity 1.8s ease ${400 + idx * 150}ms, 
-                                   transform 1.8s ease ${400 + idx * 150}ms`;
 
             el.addEventListener('mouseenter', () => {
                 showCard(g);
@@ -2198,23 +2310,45 @@ function signIndexForHouse(houseNumber) {
                 focusGraha(g.name);
             });
 
-            setTimeout(() => {
-                const r = g.staggerRadius || 0.38;
-                const p = localXY(g.absolute_longitude, r);
+            if (isResize) {
+                el.style.transition = 'none';
+                const r = g.staggerRadius || 0.29;
+                const p = localXY(targetAngle, r);
                 el.style.left = p.x + '%';
                 el.style.top = p.y + '%';
                 el.style.opacity = 1;
                 el.style.transform = 'translate(-50%, -50%) scale(1)';
-            }, 100);
+            } else {
+                // Start coordinates in outer space bounds
+                const startAngle = g.absolute_longitude + (Math.random() * 120 - 60);
+                const startRadius = 1.35 + Math.random() * 0.45;
+                const start = localXY(startAngle, startRadius);
+                el.style.left = start.x + '%';
+                el.style.top = start.y + '%';
+                el.style.opacity = 0;
+                el.style.transform = 'translate(-50%, -50%) scale(0.3)';
+                el.style.transition = `left 2.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + idx * 150}ms, 
+                                       top 2.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + idx * 150}ms, 
+                                       opacity 1.8s ease ${400 + idx * 150}ms, 
+                                       transform 1.8s ease ${400 + idx * 150}ms`;
+
+                setTimeout(() => {
+                    const r = g.staggerRadius || 0.29;
+                    const p = localXY(targetAngle, r);
+                    el.style.left = p.x + '%';
+                    el.style.top = p.y + '%';
+                    el.style.opacity = 1;
+                    el.style.transform = 'translate(-50%, -50%) scale(1)';
+                }, 100);
+            }
         });
 
         // 6. Node Axis
         const rahu = state.placements.find(p => p.name === 'Rahu');
         if (rahu) {
             const axis = document.getElementById('nodeAxis');
-            axis.style.width = chart.clientWidth * 0.82 + 'px';
-            axis.style.transform = `translate(-50%,-50%) rotate(${rahu.absolute_longitude}deg)`;
-            setTimeout(() => axis.classList.add('on'), 950);
+            axis.style.transform = `translate(-50%,-50%) rotate(${rahu.absolute_longitude + offsetAngle}deg)`;
+            axis.classList.add('on');
         }
     }
 
@@ -2582,7 +2716,7 @@ function signIndexForHouse(houseNumber) {
             }
             state.placements.forEach(g => {
                 if (g.el) {
-                    const r = g.staggerRadius || 0.38;
+                    const r = g.staggerRadius || 0.275;
                     const p = localXY(g.absolute_longitude, r);
                     g.el.style.left = p.x + '%';
                     g.el.style.top = p.y + '%';
@@ -2590,7 +2724,7 @@ function signIndexForHouse(houseNumber) {
             });
             const lagna = state.placements.find(g => g.name === "Lagna");
             if (lagna && lagna.el) {
-                const p = localXY(lagna.absolute_longitude, lagna.staggerRadius || 0.33);
+                const p = localXY(lagna.absolute_longitude, lagna.staggerRadius || 0.22);
                 lagna.el.style.left = p.x + '%';
                 lagna.el.style.top = p.y + '%';
             }
@@ -2672,8 +2806,8 @@ function signIndexForHouse(houseNumber) {
     }
 
     function highlightNakshatraWedge(startAngle, endAngle, wedgeClass) {
-        // Nakshatra ring spans radius 256 to 336
-        highlightSector(startAngle, endAngle, 256, 336, wedgeClass);
+        // Nakshatra ring spans radius 360 to 396
+        highlightSector(startAngle, endAngle, 360, 396, wedgeClass);
     }
 
     function clearWedges() {
@@ -2751,7 +2885,7 @@ function signIndexForHouse(houseNumber) {
         });
 
         // Inject highlight wedge into SVG
-        highlightSector(index * 30, (index + 1) * 30, 256, 400, "gold-violet");
+        highlightSector(index * 30, (index + 1) * 30, 250, 396, "gold-violet");
 
         appendOracleMessage("oracle", `Analyzing Rāśi sector: ${name} (${signName}). Directing energy bounds.`);
     }
@@ -2789,7 +2923,7 @@ function signIndexForHouse(houseNumber) {
         
         planetsData.forEach((g, idx) => {
             if (g.el) {
-                const r = g.staggerRadius || ((g.name === 'Rahu' || g.name === 'Ketu') ? 0.35 : 0.38);
+                const r = g.staggerRadius || ((g.name === 'Rahu' || g.name === 'Ketu') ? 0.25 : 0.275);
                 const p = localXY(g.absolute_longitude + offsetAngle, r);
                 g.el.style.left = p.x + '%';
                 g.el.style.top = p.y + '%';

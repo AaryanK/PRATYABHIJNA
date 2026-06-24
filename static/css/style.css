@@ -344,14 +344,22 @@ button,input{
   transform:scale(1);
 }
 
+.chart-stage {
+  width: min(92vw, 520px);
+  aspect-ratio: 1 / 1;
+  position: relative;
+  margin: 0 auto;
+}
+
 .chart{
   position:relative;
-  /* Centered, dominant visual element using clamp/vmin */
+  /* Centered, dominant visual element using clamp/vmin and aspect-ratio */
   width:clamp(280px, 75vmin, 850px);
-  height:clamp(280px, 75vmin, 850px);
+  aspect-ratio:1 / 1;
   border-radius:50%;
   filter:drop-shadow(0 0 60px rgba(139,92,255,.32));
   transform-style:preserve-3d;
+  overflow:visible;
 }
 
 .chart:before{
@@ -371,34 +379,58 @@ button,input{
   }
 }
 
-/* Concentric Rings */
-.ring{
-  position:absolute;
-  border-radius:50%;
-  border:1px solid rgba(244,201,120,.22);
-  inset:0;
-  box-shadow:inset 0 0 30px rgba(244,201,120,.03);
-  transition: opacity 0.8s, border-color 0.8s;
+/* Concentric Rings in SVG */
+.svg-ring {
+  fill: none;
+  stroke: rgba(244, 201, 120, 0.22);
+  stroke-width: 1.2px;
+  transition: opacity 0.8s, stroke 0.8s;
+  opacity: 0;
 }
 
-.ring.r2{
-  inset:8%;
-  border-color:rgba(216,197,255,.14);
+.svg-ring.r1 {
+  stroke: rgba(244, 201, 120, 0.28);
+  stroke-width: 1.5px;
 }
 
-.ring.r3{
-  inset:18%;
-  border-color:rgba(127,255,242,.12);
+.svg-ring.r2 {
+  stroke: rgba(127, 255, 242, 0.18);
+  stroke-width: 1.0px;
 }
 
-.ring.r4{
-  inset:30%;
-  border-color:rgba(244,201,120,.1);
+.svg-ring.r3 {
+  stroke: rgba(244, 201, 120, 0.14);
+  stroke-width: 1.0px;
 }
 
-.ring.r5{
-  inset:42%;
-  border-color:rgba(255,255,255,.06);
+.svg-ring.r4 {
+  stroke: rgba(216, 197, 255, 0.12);
+  stroke-width: 1.0px;
+}
+
+.svg-ring.r5 {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1.0px;
+  stroke-dasharray: 4 4;
+}
+
+.rashi-sector-line {
+  stroke: rgba(244, 201, 120, 0.28);
+  stroke-width: 1px;
+  opacity: 0;
+  animation: fadeInLine 1.5s ease forwards;
+}
+
+.nakshatra-sector-line {
+  stroke: rgba(127, 255, 242, 0.15);
+  stroke-width: 0.75px;
+  opacity: 0;
+  animation: fadeInLine 2s ease forwards;
+}
+
+@keyframes fadeInLine {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Slowly rotating outer background aura ring */
@@ -445,6 +477,7 @@ button,input{
     height: 100%;
     pointer-events: none;
     z-index: 2;
+    overflow: visible;
 }
 
 .focusWedge {
@@ -496,26 +529,41 @@ button,input{
 
 .rashiLabel{
   position:absolute;
-  transform:translate(-50%,-50%);
+  transform:translate(-50%,-50%) rotate(var(--rot, 0deg));
   font-family:Georgia,serif;
   font-size:clamp(11px, 1.2vw, 15px);
   color:#f8daa0;
   text-shadow:0 0 18px rgba(244,201,120,.42);
   white-space:nowrap;
-  transition: opacity 0.5s, filter 0.5s;
+  transition: opacity 0.5s, filter 0.5s, color 0.5s;
   z-index: 10;
+  pointer-events: none;
 }
 
 .nakLabel{
   position:absolute;
   transform:translate(-50%,-50%) rotate(var(--rot));
   font-size:9px;
-  color:rgba(216,197,255,.38); /* softer default color */
+  color:rgba(216,197,255,.32); /* softer default color */
   letter-spacing:.09em;
   text-transform:uppercase;
   white-space:nowrap;
-  transition: opacity 0.5s, color 0.5s, font-size 0.5s;
+  transition: opacity 0.5s, color 0.5s, font-size 0.5s, text-shadow 0.5s;
   z-index: 10;
+  pointer-events: none;
+}
+
+.nakLabel.active{
+  color:#7ffff2; /* bright cyan for active nakshatras where planets reside */
+  opacity:1;
+  text-shadow:0 0 8px rgba(127,255,242,.65);
+  font-weight:600;
+}
+
+.nakLabel.bright{
+  color:#ffe8b0; /* warm gold for all nakshatras in Nakshatra mode */
+  opacity:0.95;
+  text-shadow:0 0 6px rgba(244,201,120,.4);
 }
 
 .lagna{
@@ -930,6 +978,10 @@ button,input{
   transition:opacity .5s ease;
 }
 
+.nodeAxis {
+  width: 86% !important;
+}
+
 .nodeAxis.on{
   opacity:.85;
 }
@@ -1020,6 +1072,8 @@ button,input{
   color:#ddd2f0;
   font-size:14px;
   line-height:1.55;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* Floating Nakshatra Summary Panel (Right Side) */
@@ -1261,6 +1315,8 @@ button,input{
   line-height:1.48;
   border-radius:18px;
   padding:12px 13px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .ai{
@@ -1544,7 +1600,9 @@ button,input{
 
   .app.revealed .chart {
     width: min(650px, 75vh) !important;
-    height: min(650px, 75vh) !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+    overflow: visible !important;
   }
 
   .app.revealed .timeline {
@@ -1661,7 +1719,9 @@ button,input{
 
   .app.revealed .chart {
     width: min(480px, 70vh) !important;
-    height: min(480px, 70vh) !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+    overflow: visible !important;
   }
 
   .app.revealed .timeline {
@@ -1843,14 +1903,16 @@ button,input{
     justify-content: center;
     align-items: center;
     margin: 10px 0 !important;
+    overflow: visible !important;
   }
 
   .chart {
     width: 92vw !important;
-    height: 92vw !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1;
     max-width: 440px !important;
-    max-height: 440px !important;
     margin: 0 auto !important;
+    overflow: visible !important;
   }
 
   /* Gochar timeline on Mobile */
@@ -2028,7 +2090,9 @@ button,input{
 @media (max-width: 480px) {
   .chart {
     width: 90vw !important;
-    height: 90vw !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+    overflow: visible !important;
   }
 
   /* Further scale down elements to prevent crowding on small mobile screens */
