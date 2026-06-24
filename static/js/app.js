@@ -480,6 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             oraclePill.classList.remove("hidden");
 
                             revealed = true;
+                            document.querySelector('.app').classList.add('revealed');
                             
                             // Build mandala elements dynamically
                             buildChart();
@@ -512,6 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     status.classList.remove('on');
                     oraclePill.classList.remove("hidden");
                     revealed = true;
+                    document.querySelector('.app').classList.add('revealed');
                     
                     buildChart();
                     addAI('The mandala is revealed. Hover any graha, press <b>R</b> for Rahu, <b>M</b> for Moon, <b>A</b> for aspects, or open <b>Gochar</b>.');
@@ -835,12 +837,10 @@ function signIndexForHouse(houseNumber) {
     }
 
     function localXY(deg, r = 0.39) {
-        const S = chart.clientWidth;
-        const R = S * r;
         const a = (deg - 90) * Math.PI / 180;
         return {
-            x: S / 2 + Math.cos(a) * R,
-            y: S / 2 + Math.sin(a) * R
+            x: 50 + Math.cos(a) * r * 100,
+            y: 50 + Math.sin(a) * r * 100
         };
     }
 
@@ -1140,8 +1140,8 @@ function signIndexForHouse(houseNumber) {
                 
                 const rot = angle - 90;
                 l.style.setProperty('--rot', `${rot}deg`);
-                l.style.left = p.x + 'px';
-                l.style.top = p.y + 'px';
+                l.style.left = p.x + '%';
+                l.style.top = p.y + '%';
                 
                 if (isWordActive) {
                     l.classList.add('active');
@@ -2020,8 +2020,8 @@ function signIndexForHouse(houseNumber) {
             const l = document.createElement('div');
             l.className = 'rashiLabel';
             l.textContent = rashis[i];
-            l.style.left = p.x + 'px';
-            l.style.top = p.y + 'px';
+            l.style.left = p.x + '%';
+            l.style.top = p.y + '%';
             l.style.opacity = 0;
             l.style.transition = `opacity 1.2s ease ${800 + i * 40}ms`;
             chart.appendChild(l);
@@ -2039,8 +2039,8 @@ function signIndexForHouse(houseNumber) {
             hl.dataset.house = houseNum;
             hl.dataset.sign = rashis[i];
             hl.textContent = `H${houseNum}`;
-            hl.style.left = hPos.x + 'px';
-            hl.style.top = hPos.y + 'px';
+            hl.style.left = hPos.x + '%';
+            hl.style.top = hPos.y + '%';
             hl.style.opacity = 0;
             hl.style.transition = `opacity 1.2s ease ${850 + i * 40}ms`;
             chart.appendChild(hl);
@@ -2094,8 +2094,8 @@ function signIndexForHouse(houseNumber) {
             const lagnaEl = document.querySelector('.lagna');
             if (lagnaEl) {
                 const p = localXY(lagna.absolute_longitude, lagna.staggerRadius || 0.33);
-                lagnaEl.style.left = p.x + 'px';
-                lagnaEl.style.top = p.y + 'px';
+                lagnaEl.style.left = p.x + '%';
+                lagnaEl.style.top = p.y + '%';
                 lagnaEl.style.opacity = 0;
                 lagnaEl.style.transform = 'translate(-50%, -50%) scale(0.5)';
                 lagnaEl.style.transition = `left 1.7s cubic-bezier(.16,.86,.22,1), top 1.7s cubic-bezier(.16,.86,.22,1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 1500ms, opacity 1.5s ease 1500ms`;
@@ -2178,8 +2178,8 @@ function signIndexForHouse(houseNumber) {
             const startAngle = g.absolute_longitude + (Math.random() * 120 - 60);
             const startRadius = 1.35 + Math.random() * 0.45;
             const start = localXY(startAngle, startRadius);
-            el.style.left = start.x + 'px';
-            el.style.top = start.y + 'px';
+            el.style.left = start.x + '%';
+            el.style.top = start.y + '%';
             el.style.opacity = 0;
             el.style.transform = 'translate(-50%, -50%) scale(0.3)';
             el.style.transition = `left 2.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + idx * 150}ms, 
@@ -2201,8 +2201,8 @@ function signIndexForHouse(houseNumber) {
             setTimeout(() => {
                 const r = g.staggerRadius || 0.38;
                 const p = localXY(g.absolute_longitude, r);
-                el.style.left = p.x + 'px';
-                el.style.top = p.y + 'px';
+                el.style.left = p.x + '%';
+                el.style.top = p.y + '%';
                 el.style.opacity = 1;
                 el.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 100);
@@ -2419,6 +2419,12 @@ function signIndexForHouse(houseNumber) {
             l.classList.remove('bright');
         });
 
+        // Hide nakshatra summary panel
+        if (nakSummary) {
+            nakSummary.classList.remove("visible");
+            nakSummary.classList.add("hidden");
+        }
+
         // Reset timeline slider state
         timeline.classList.remove('on');
 
@@ -2578,15 +2584,15 @@ function signIndexForHouse(houseNumber) {
                 if (g.el) {
                     const r = g.staggerRadius || 0.38;
                     const p = localXY(g.absolute_longitude, r);
-                    g.el.style.left = p.x + 'px';
-                    g.el.style.top = p.y + 'px';
+                    g.el.style.left = p.x + '%';
+                    g.el.style.top = p.y + '%';
                 }
             });
             const lagna = state.placements.find(g => g.name === "Lagna");
             if (lagna && lagna.el) {
                 const p = localXY(lagna.absolute_longitude, lagna.staggerRadius || 0.33);
-                lagna.el.style.left = p.x + 'px';
-                lagna.el.style.top = p.y + 'px';
+                lagna.el.style.left = p.x + '%';
+                lagna.el.style.top = p.y + '%';
             }
             const rahu = state.placements.find(p => p.name === 'Rahu');
             if (rahu) {
@@ -2785,8 +2791,8 @@ function signIndexForHouse(houseNumber) {
             if (g.el) {
                 const r = g.staggerRadius || ((g.name === 'Rahu' || g.name === 'Ketu') ? 0.35 : 0.38);
                 const p = localXY(g.absolute_longitude + offsetAngle, r);
-                g.el.style.left = p.x + 'px';
-                g.el.style.top = p.y + 'px';
+                g.el.style.left = p.x + '%';
+                g.el.style.top = p.y + '%';
             }
         });
         

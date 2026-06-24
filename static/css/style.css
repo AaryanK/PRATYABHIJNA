@@ -347,8 +347,8 @@ button,input{
 .chart{
   position:relative;
   /* Centered, dominant visual element using clamp/vmin */
-  width:clamp(620px, 78vmin, 980px);
-  height:clamp(620px, 78vmin, 980px);
+  width:clamp(280px, 75vmin, 850px);
+  height:clamp(280px, 75vmin, 850px);
   border-radius:50%;
   filter:drop-shadow(0 0 60px rgba(139,92,255,.32));
   transform-style:preserve-3d;
@@ -1495,73 +1495,570 @@ button,input{
 }
 
 /* Responsive adjustments */
-@media(max-width:760px){
-  .brand{
-    left:18px;
-    top:18px;
+/* Responsive adjustments */
+
+/* Desktop & Laptop layout overrides once revealed */
+@media (min-width: 1024px) {
+  .app.revealed {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    grid-template-rows: 80px 1fr 80px;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
   }
-  .brand h1{
-    font-size:16px;
+  
+  .app.revealed .brand {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 1;
+    left: auto !important;
+    top: auto !important;
+    margin-left: 34px;
+    align-self: center;
   }
-  .brand span{
-    display:none;
+
+  .app.revealed .topHint {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 1;
+    right: auto !important;
+    top: auto !important;
+    justify-self: end;
+    align-self: center;
+    margin-right: 34px;
   }
-  .topHint{
-    display:none;
+
+  .app.revealed .mandala {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 2;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  .portal{
-    bottom:20px;
-    padding:18px;
-    border-radius:26px;
+
+  .app.revealed .chart {
+    width: min(650px, 75vh) !important;
+    height: min(650px, 75vh) !important;
   }
-  .portalTop{
-    grid-template-columns:1fr;
+
+  .app.revealed .timeline {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    justify-self: center;
+    margin-top: 20px;
+    width: min(580px, calc(100% - 80px)) !important;
+    transform: none !important;
+    left: auto !important;
+    top: auto !important;
   }
-  .portalSub{
-    display:none;
+
+  .app.revealed .modes {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 3;
+    align-self: center;
+    justify-self: center;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    margin: 0 !important;
   }
-  .formGrid{
-    grid-template-columns:1fr;
+
+  .app.revealed .aspect-filters {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+    justify-self: center;
+    margin-top: -65px !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
   }
-  .chart{
-    width:94vw;
-    height:94vw;
+
+  .app.revealed .status {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 3;
+    align-self: center;
+    justify-self: start;
+    left: auto !important;
+    bottom: auto !important;
+    margin-left: 34px !important;
   }
-  .modes{
-    max-width:calc(100vw - 24px);
-    overflow:auto;
-    top:auto;
-    bottom:12px;
+
+  /* Right-hand Sidebar stacks on Desktop */
+  .nakSummary, .command, .oracleCard {
+    left: auto !important;
+    right: 34px !important;
+    width: 370px !important;
   }
-  .status{
-    display:none!important;
-  }
-  .command{
-    right:12px;
-    bottom:12px;
-  }
-  .oracleCard{
-    bottom:84px;
-  }
-  .planet{
-    width:40px;
-    height:40px;
-    font-size:18px;
-  }
-  .planet:after{
-    display:none;
-  }
+
   .nakSummary {
-      position: fixed;
-      bottom: 84px;
-      right: 12px;
-      top: auto;
-      transform: none;
-      width: calc(100vw - 24px);
-      max-height: 40vh;
+    top: 90px !important;
+    height: calc(100vh - 190px) !important;
+    transform: none !important;
+    max-height: none !important;
   }
+
+  .command {
+    top: 90px !important;
+    height: calc(100vh - 190px) !important;
+    transform: none !important;
+  }
+
+  .oracleCard {
+    bottom: 90px !important;
+    transform: none !important;
+  }
+}
+
+/* Tablet layout overrides once revealed */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app.revealed {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: 80px 1fr 80px;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  .app.revealed .brand {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 1;
+    left: auto !important;
+    top: auto !important;
+    margin-left: 20px;
+    align-self: center;
+  }
+
+  .app.revealed .topHint {
+    display: none !important;
+  }
+
+  .app.revealed .mandala {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 2;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .app.revealed .chart {
+    width: min(480px, 70vh) !important;
+    height: min(480px, 70vh) !important;
+  }
+
+  .app.revealed .timeline {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    justify-self: center;
+    margin-top: 15px;
+    width: min(420px, calc(100% - 40px)) !important;
+    transform: none !important;
+    left: auto !important;
+    top: auto !important;
+  }
+
+  .app.revealed .modes {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 3;
+    align-self: center;
+    justify-self: center;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+  }
+
+  .app.revealed .aspect-filters {
+    position: relative !important;
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+    justify-self: center;
+    margin-top: -65px !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+  }
+
+  .app.revealed .status {
+    display: none !important;
+  }
+
+  /* Right-hand Sidebar stacks on Tablet */
+  .nakSummary, .command, .oracleCard {
+    left: auto !important;
+    right: 20px !important;
+    width: 310px !important;
+  }
+
+  .nakSummary {
+    top: 90px !important;
+    height: calc(100vh - 190px) !important;
+    transform: none !important;
+    max-height: none !important;
+  }
+
+  .command {
+    top: 90px !important;
+    height: calc(100vh - 190px) !important;
+    transform: none !important;
+  }
+
+  .oracleCard {
+    bottom: 90px !important;
+    transform: none !important;
+  }
+}
+
+/* Mobile & Small Screen layout overrides */
+@media (max-width: 767px) {
+  html, body {
+    overflow-y: auto !important;
+    height: auto !important;
+  }
+
+  .app {
+    height: auto !important;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 85px 16px 120px 16px !important;
+    gap: 20px;
+  }
+
+  .brand {
+    position: absolute !important;
+    left: 50% !important;
+    top: 24px !important;
+    transform: translateX(-50%) !important;
+    gap: 8px;
+    white-space: nowrap;
+    opacity: 0.8;
+  }
+
+  .brand h1 {
+    font-size: 16px !important;
+  }
+
+  .brand span {
+    display: none !important;
+  }
+
+  .topHint {
+    display: none !important;
+  }
+
+  /* Input panel styling on Mobile */
+  .portal {
+    position: relative !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px !important;
+    border-radius: 20px !important;
+    margin: 0 auto !important;
+  }
+
+  .portalTop {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    text-align: center;
+  }
+
+  .portalSub {
+    display: block !important;
+    max-width: 100% !important;
+    font-size: 12px !important;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .field label {
+    margin-bottom: 6px !important;
+  }
+
+  .field input {
+    font-size: 16px !important; /* Prevent mobile zoom */
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .revealBtn {
+    width: 100% !important;
+    padding: 14px !important;
+    font-size: 15px !important;
+    border-radius: 12px !important;
+    margin-top: 6px;
+  }
+
+  /* Portal hiding animation on Mobile pulls it out of layout space */
+  .portal.hidden {
+    display: none !important;
+  }
+
+  /* Mandala container & Chart on Mobile */
+  .mandala {
+    position: relative !important;
+    inset: auto !important;
+    transform: none !important;
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: none;
+  }
+
+  .mandala.on {
+    display: flex !important;
+    opacity: 1 !important;
+    height: auto !important;
+    width: 100% !important;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0 !important;
+  }
+
+  .chart {
+    width: 92vw !important;
+    height: 92vw !important;
+    max-width: 440px !important;
+    max-height: 440px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Gochar timeline on Mobile */
+  .timeline {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 10px 0 !important;
+    border-radius: 16px !important;
+  }
+
+  /* Aspect filters on Mobile */
+  .aspect-filters {
+    position: relative !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    margin: 10px 0 !important;
+    width: fit-content;
+  }
+
+  /* Oracle Details Card on Mobile (Stacks below chart) */
+  .oracleCard {
+    position: relative !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 16px !important;
+    border-radius: 20px !important;
+    margin: 10px 0 !important;
+    display: none;
+  }
+
+  .oracleCard.show {
+    display: block !important;
+  }
+
+  .cardTop {
+    gap: 12px !important;
+  }
+
+  .cardGlyph {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 22px !important;
+  }
+
+  .cardTitle {
+    font-size: 20px !important;
+  }
+
+  .cardMeaning {
+    font-size: 13px !important;
+  }
+
+  /* Nakshatra Summary list on Mobile (Stacks below chart) */
+  .nakSummary {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    border-radius: 20px !important;
+    margin: 10px 0 !important;
+    padding: 16px !important;
+    display: none;
+  }
+
   .nakSummary.visible {
-      transform: none;
+    display: block !important;
+  }
+
+  .nakSummaryList {
+    max-height: 280px !important;
+  }
+
+  /* Command chat console on Mobile */
+  .command {
+    position: relative !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px !important;
+    margin: 10px 0 !important;
+    display: none;
+  }
+
+  .command.collapsed {
+    display: none !important;
+  }
+
+  .command:not(.collapsed) {
+    display: block !important;
+  }
+
+  .msgs {
+    height: 200px !important;
+  }
+
+  /* Floating trigger button on Mobile */
+  .oraclePill {
+    position: fixed !important;
+    right: 16px !important;
+    bottom: 84px !important;
+    padding: 10px 18px !important;
+  }
+
+  /* Switcher Modes Bar - keeps floating at the bottom */
+  .modes {
+    position: fixed !important;
+    left: 50% !important;
+    bottom: 16px !important;
+    transform: translateX(-50%) !important;
+    width: min(440px, calc(100vw - 32px)) !important;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+  }
+
+  .modes.on {
+    display: flex !important;
+  }
+
+  .modeBtn {
+    padding: 6px 8px !important;
+    font-size: 10px !important;
+  }
+
+  .status {
+    display: none !important;
+  }
+
+  /* Scaling down chart element sizes on mobile viewports */
+  .planet {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .graha-orb {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .graha-glyph {
+    font-size: 11px !important;
+  }
+  .graha-label {
+    font-size: 9px !important;
+    bottom: -16px !important;
+  }
+  .rashiLabel {
+    font-size: 11px !important;
+  }
+  .nakLabel {
+    font-size: 8px !important;
+  }
+  .houseLabel {
+    font-size: 9px !important;
+  }
+  .lagna {
+    font-size: 10px !important;
+    padding: 5px 8px !important;
+  }
+}
+
+/* Small mobile overrides */
+@media (max-width: 480px) {
+  .chart {
+    width: 90vw !important;
+    height: 90vw !important;
+  }
+
+  /* Further scale down elements to prevent crowding on small mobile screens */
+  .planet {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  .graha-orb {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .graha-glyph {
+    font-size: 9px !important;
+  }
+  .graha-label {
+    font-size: 8px !important;
+    bottom: -12px !important;
+  }
+  .rashiLabel {
+    font-size: 9px !important;
+  }
+  .nakLabel {
+    font-size: 7px !important;
+  }
+  .houseLabel {
+    font-size: 8px !important;
+  }
+  .lagna {
+    font-size: 9px !important;
+    padding: 4px 6px !important;
   }
 }
 
