@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Pratyabhijna — Immersive Vedic Observatory</title>
+    <!-- Custom CSS stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        window.CESIUM_ION_TOKEN = "{{ cesium_token }}";
+        
+        // CORS Web Worker shim to prevent browser SecurityError when loading Cesium workers from CDN cross-origin
+        (function() {
+            try {
+                const OriginalWorker = window.Worker;
+                if (OriginalWorker) {
+                    window.Worker = function(stringUrl, options) {
+                        if (stringUrl && (stringUrl.indexOf('cesium.com') !== -1 || stringUrl.indexOf('cdnjs') !== -1)) {
+                            const blobCode = 'importScripts("' + stringUrl + '");';
+                            const blob = new Blob([blobCode], { type: 'application/javascript' });
+                            const blobUrl = URL.createObjectURL(blob);
+                            return new OriginalWorker(blobUrl, options);
+                        }
+                        return new OriginalWorker(stringUrl, options);
+                    };
+                }
+            } catch (e) {
+                console.warn("Worker override failed:", e);
+            }
+        })();
+    </script>
+</head>
+<body>
+    <!-- Full-screen Starry Cosmos backdrop (CesiumJS container) -->
+    <div id="cosmos"></div>
+    <!-- 2D Overlay for dust, ecliptic grid, etc. -->
+    <canvas id="skyOverlay"></canvas>
+    <div class="aura"></div>
+    <div class="vignette"></div>
+
+    <div id="markerLabel" class="markerLabel">
+        <div class="markerName" id="markerName">Kathmandu, Nepal</div>
+        <div class="markerCoords" id="markerCoords">27.7172° N, 85.3240° E</div>
+    </div>
+
+    <div class="app">
+        <!-- Minimal cinematic branding header (Subtle watermark style) -->
+        <div class="brand" id="brand">
+            <div class="mark"></div>
+            <div>
+                <h1>PRATYABHIJNA</h1>
+                <span>Recognition through Jyotiṣa</span>
+            </div>
+        </div>
+        <div class="topHint">Press / for the oracle · R M S A T shortcuts</div>
+
+        <!-- Initial Birth Coordinates Glassmorphism Portal -->
+        <section class="portal" id="portal">
+            <div class="portalTop">
+                <div>
+                    <div class="kicker">Ujjaini-inspired Vedic interface</div>
+                    <div class="portalTitle">Enter the sky<br/>that received you.</div>
+                </div>
+                <div class="portalSub">A full-screen ritual prototype: Earth, birthplace, sidereal sky, rāśi, nakshatra, grahas, focus, transit and AI-guided reading.</div>
+            </div>
+            <div class="formGrid">
+                <div class="field"><label>Date of birth</label><input id="dob" type="date" value="2005-10-25"></div>
+                <div class="field"><label>Time</label><input id="time" type="time" value="09:05"></div>
+                <div class="field"><label>Place</label><input id="place" value="Kathmandu, Nepal"></div>
+                <button class="revealBtn" id="reveal">Reveal</button>
+            </div>
+        </section>
+
+        <!-- Loading spinner panel -->
+        <div class="ritual" id="ritual"><div class="ritualCircle"></div></div>
+
+        <!-- Staging and cinematic titles overlay -->
+        <div class="stage" id="stage">
+            <div class="small">The heavens remember</div>
+            <div class="big" id="stageBig">Anchoring place</div>
+            <div class="copy" id="stageCopy">The Earth turns toward the birthplace.</div>
+        </div>
+
+        <!-- Interactive Sidereal Mandala Chart -->
+        <section class="mandala" id="mandala">
+            <div class="chart" id="chart">
+                <!-- Rotating Decorative Coordinate Rings -->
+                <div class="chartAura" id="chartAura"></div>
+                
+                <!-- Concentric Rings -->
+                <div class="ring"></div>
+                <div class="ring r2"></div>
+                <div class="ring r3"></div>
+                <div class="ring r4"></div>
+                <div class="ring r5"></div>
+                
+                <!-- Pulsing Central Bindu -->
+                <div class="bindu" id="bindu"></div>
+                <div id="observerLabel" class="observerLabel">Observer Point</div>
+                
+                <div class="lagna">Lagna</div>
+                <div class="nodeAxis" id="nodeAxis"></div>
+
+                <!-- SVG Overlay for dynamic highlights / focus wedges -->
+                <svg class="chartOverlay" id="chartOverlay" viewBox="0 0 800 800">
+                    <defs>
+                        <filter id="wedgeGlow" x="-30%" y="-30%" width="160%" height="160%">
+                            <feGaussianBlur stdDeviation="12" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <g id="focusWedges"></g>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Floating Graha Detail Tooltip Card (Bottom Center) -->
+        <section class="oracleCard" id="oracleCard">
+            <div class="cardTop">
+                <div class="cardGlyph" id="cardGlyph">☾</div>
+                <div style="flex: 1;">
+                    <div class="cardTitle" id="cardTitle">Moon</div>
+                    <div class="cardMeta" id="cardMeta">Rohiṇī · Vṛṣabha · 8th house</div>
+                </div>
+                <button class="askOracleBtn" id="askOracleBtn" data-target="">Ask about this</button>
+            </div>
+            <div class="cardChips" id="cardChips"></div>
+            <div class="cardMeaning" id="cardMeaning">Hover a graha to read its symbolic layer.</div>
+        </section>
+
+        <!-- Transit Slider overlay -->
+        <div class="timeline" id="timeline">
+            <div class="timeTop"><span>Gochar stream</span><span>Birth sky → current sky → future windows</span></div>
+            <div class="track"><div class="knob"></div></div>
+        </div>
+
+        <!-- Floating Nakshatra Summary Panel (Right side) -->
+        <div class="nakSummary glass-panel hidden" id="nakSummary">
+            <div class="nakSummaryHead">
+                <h3>Stellar Summary</h3>
+                <button class="closeNakBtn" id="closeNakBtn">&times;</button>
+            </div>
+            <div class="nakSummaryList" id="nakSummaryList">
+                <!-- Dynamically populated in JS -->
+            </div>
+        </div>
+
+        <!-- Switcher Modes Bar -->
+        <div class="modes" id="modes">
+            <button class="modeBtn active" data-mode="chart">Rāśi</button>
+            <button class="modeBtn" data-mode="nak">Nakshatra</button>
+            <button class="modeBtn" data-mode="aspect">Aspects</button>
+            <button class="modeBtn" data-mode="transit">Gochar</button>
+            <button class="modeBtn" data-mode="dasha">Dasha</button>
+            <button class="modeBtn" data-mode="reset">Reset</button>
+        </div>
+
+        <!-- Aspect Filter Toggle -->
+        <div class="aspect-filters" id="aspectFilters">
+            <button class="filter-chip active" data-filter="core">Core</button>
+            <button class="filter-chip" data-filter="focused">Selected Graha</button>
+            <button class="filter-chip" data-filter="all">All Dṛṣṭi</button>
+        </div>
+
+        <!-- Technical status message panel -->
+        <div class="status" id="status"><b>Birth Sky</b><br/>Rāśi mandala is open. Hover grahas, use focus controls, or ask the oracle.</div>
+
+        <!-- Collapsed Oracle Trigger Pill -->
+        <button class="oraclePill" id="oraclePill">
+            <span class="pillOrb"></span>
+            <span class="pillText">Ask Oracle</span>
+        </button>
+
+        <!-- Oracle chat command console -->
+        <section class="command collapsed" id="command">
+            <div class="commandHead" id="commandHead">
+                <div>
+                    <b>Oracle Lens</b>
+                    <div class="commandSub" id="commandSub">Current Focus: Rāśi Mandala</div>
+                </div>
+                <button class="closeCommandBtn" id="closeCommandBtn">&times;</button>
+            </div>
+            <div class="msgs" id="msgs">
+                <div class="msg ai">Namaste. Reveal the chart, then ask: “focus Rahu,” “show aspects,” “open gochar,” or “what is the strongest theme?”</div>
+            </div>
+            
+            <!-- Suggested Query Chips -->
+            <div class="oracleChips" id="oracleChips">
+                <button class="chip" data-query="focus Moon">Moon & Saturn</button>
+                <button class="chip" data-query="12th">12th House</button>
+                <button class="chip" data-query="focus Rahu">Rahu–Ketu</button>
+                <button class="chip" data-query="show nakshatras">Nakshatras</button>
+                <button class="chip" data-query="dasha">Timeline</button>
+            </div>
+
+            <div class="ask">
+                <input id="ask" placeholder="Ask the chart..." autocomplete="off" />
+                <button id="send">↵</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- CesiumJS Assets -->
+    <script>
+        window.CESIUM_BASE_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.95/Build/Cesium/';
+    </script>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.95/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.95/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    
+    <!-- Cesium Earth Scene JS -->
+    <script src="{{ url_for('static', filename='js/cesiumEarthScene.js') }}"></script>
+    <!-- Hardcoded Aspects Data -->
+    <script src="{{ url_for('static', filename='js/aspects.js') }}"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}?v={{ range(1, 100000) | random }}"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Core web framework
+Flask
+
+# Geolocation
+geopy
+
+# Timezone resolution
+# Note: Install specific version for compatibility with h3 binary wheels
+timezonefinder==6.2.0
+
+# Timezone data (required on Windows for zoneinfo)
+tzdata
+
+# Date utilities
+python-dateutil
+
+# Swiss Ephemeris (high-accuracy planetary calculations)
+# Requires Microsoft C++ Build Tools on Windows
+# If unavailable, the system falls back to the built-in pure-Python ephemeris
+# pyswisseph
+
+# Optional: High-accuracy alternative (requires pyswisseph)
+# kerykeion
+tzdata>=2024.1
+timezonefinder>=6.5.0
+pytz>=2024.1
