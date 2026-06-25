@@ -345,7 +345,8 @@ button,input{
 }
 
 .chart-stage {
-  width: min(92vw, 520px);
+  width: min(92vw, 92vh);
+  height: min(92vw, 92vh);
   aspect-ratio: 1 / 1;
   position: relative;
   margin: 0 auto;
@@ -354,7 +355,8 @@ button,input{
 .chart{
   position:relative;
   /* Centered, dominant visual element using clamp/vmin and aspect-ratio */
-  width:clamp(280px, 75vmin, 850px);
+  width: min(92vw, 92vh);
+  height: min(92vw, 92vh);
   aspect-ratio:1 / 1;
   border-radius:50%;
   filter:drop-shadow(0 0 60px rgba(139,92,255,.32));
@@ -595,13 +597,13 @@ button,input{
 /* Graha planet node representation */
 .planet{
   position:absolute;
-  width:44px;
-  height:44px;
+  width:48px;
+  height:48px;
   cursor:pointer;
   z-index:11;
   pointer-events:auto;
   transform:translate(-50%,-50%);
-  transition:left 1.7s cubic-bezier(.16,.86,.22,1), top 1.7s cubic-bezier(.16,.86,.22,1), transform .25s ease, opacity .45s ease, filter .25s ease;
+  transition:left 1.7s cubic-bezier(.16,.86,.22,1), top 1.7s cubic-bezier(.16,.86,.22,1), transform .3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity .45s ease, filter .25s ease;
 }
 
 .graha-body {
@@ -628,46 +630,46 @@ button,input{
 
 .graha-orb {
   position:absolute;
-  width:28px;
-  height:28px;
+  width:30px;
+  height:30px;
   border-radius:50%;
-  background:radial-gradient(circle at 35% 35%, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.4) 80%), var(--c);
-  border:1px solid rgba(255, 255, 255, 0.25);
-  box-shadow:0 0 10px var(--g), inset 0 0 4px rgba(255,255,255,0.4);
+  background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 35%, rgba(0,0,0,0.6) 85%), var(--c);
+  border:1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:0 0 14px var(--g), inset 0 0 6px rgba(255,255,255,0.45);
   z-index:2;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
   animation:grahaBreathe 3.5s ease-in-out infinite alternate;
 }
 
 .graha-glyph {
   position:absolute;
-  font-size:15px;
+  font-size:16px;
   color:#ffffff;
   text-shadow:0 0 4px #000, 0 0 8px var(--c);
   z-index:3;
   pointer-events:none;
   font-weight:bold;
-  transition: transform 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   animation:grahaBreathe 3.5s ease-in-out infinite alternate;
 }
 
 .graha-halo {
   position:absolute;
-  width:42px;
-  height:42px;
+  width:48px;
+  height:48px;
   border-radius:50%;
   background:radial-gradient(circle, var(--g) 0%, transparent 70%);
-  opacity:0.35;
+  opacity:0.45;
   z-index:1;
   pointer-events:none;
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   animation:haloPulse 4s ease-in-out infinite;
 }
 
 .graha-ripple {
   position:absolute;
-  width:28px;
-  height:28px;
+  width:30px;
+  height:30px;
   border-radius:50%;
   border:1.5px solid var(--c);
   opacity:0;
@@ -700,23 +702,24 @@ button,input{
 }
 
 .planet:hover .graha-orb {
-  transform:scale(1.15);
-  box-shadow:0 0 20px var(--g), inset 0 0 6px rgba(255,255,255,0.6);
-  filter:brightness(1.2);
+  transform:scale(1.2);
+  box-shadow:0 0 22px var(--g), inset 0 0 8px rgba(255,255,255,0.7);
+  filter:brightness(1.25);
 }
 .planet:hover .graha-glyph {
-  transform:scale(1.15);
+  transform:scale(1.2);
 }
 
 .planet.focused .graha-orb {
   animation:selectedGrahaPulse 1.8s ease-in-out infinite alternate;
   border-color:#ffffff;
-  transform:scale(1.1);
+  transform:scale(1.27) !important;
+  box-shadow:0 0 25px var(--g), inset 0 0 8px rgba(255,255,255,0.8);
 }
 
 .planet.focused .graha-halo {
-  opacity:0.85;
-  transform:scale(1.4);
+  opacity:0.95;
+  transform:scale(1.6) !important;
 }
 
 .chart.has-focus .planet:not(.focused),
@@ -1565,92 +1568,41 @@ button,input{
   }
   
   .app.revealed .brand {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 1;
-    left: auto !important;
-    top: auto !important;
-    margin-left: 34px;
-    align-self: center;
+    position: absolute !important;
+    left: 34px !important;
+    top: 26px !important;
+    margin: 0 !important;
+    transform: none !important;
   }
 
   .app.revealed .topHint {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 1;
-    right: auto !important;
-    top: auto !important;
-    justify-self: end;
-    align-self: center;
-    margin-right: 34px;
+    position: absolute !important;
+    right: 430px !important;
+    top: 26px !important;
+    margin: 0 !important;
+    transform: none !important;
   }
 
   .app.revealed .mandala {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 2;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(80vw, 80vh) !important;
+    height: min(80vw, 80vh) !important;
     display: flex !important;
     justify-content: center;
     align-items: center;
-    height: 100% !important;
-    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    z-index: 5;
   }
 
   .app.revealed .chart {
-    width: min(650px, 75vh) !important;
-    height: auto !important;
-    aspect-ratio: 1 / 1;
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
     overflow: visible !important;
-  }
-
-  .app.revealed .timeline {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    justify-self: center;
-    margin-top: 20px;
-    width: min(580px, calc(100% - 80px)) !important;
-    transform: none !important;
-    left: auto !important;
-    top: auto !important;
-  }
-
-  .app.revealed .modes {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 3;
-    align-self: center;
-    justify-self: center;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-    margin: 0 !important;
-  }
-
-  .app.revealed .aspect-filters {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 3;
-    align-self: start;
-    justify-self: center;
-    margin-top: -65px !important;
-    left: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-  }
-
-  .app.revealed .status {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 3;
-    align-self: center;
-    justify-self: start;
-    left: auto !important;
-    bottom: auto !important;
-    margin-left: 34px !important;
   }
 
   /* Right-hand Sidebar stacks on Desktop */
@@ -1671,6 +1623,7 @@ button,input{
     top: 90px !important;
     height: calc(100vh - 190px) !important;
     transform: none !important;
+    max-height: none !important;
   }
 
   .oracleCard {
@@ -1691,13 +1644,11 @@ button,input{
   }
 
   .app.revealed .brand {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 1;
-    left: auto !important;
-    top: auto !important;
-    margin-left: 20px;
-    align-self: center;
+    position: absolute !important;
+    left: 20px !important;
+    top: 26px !important;
+    margin: 0 !important;
+    transform: none !important;
   }
 
   .app.revealed .topHint {
@@ -1705,63 +1656,25 @@ button,input{
   }
 
   .app.revealed .mandala {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 2;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(80vw, 80vh) !important;
+    height: min(80vw, 80vh) !important;
     display: flex !important;
     justify-content: center;
     align-items: center;
-    height: 100% !important;
-    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    z-index: 5;
   }
 
   .app.revealed .chart {
-    width: min(480px, 70vh) !important;
-    height: auto !important;
-    aspect-ratio: 1 / 1;
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
     overflow: visible !important;
-  }
-
-  .app.revealed .timeline {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
-    justify-self: center;
-    margin-top: 15px;
-    width: min(420px, calc(100% - 40px)) !important;
-    transform: none !important;
-    left: auto !important;
-    top: auto !important;
-  }
-
-  .app.revealed .modes {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 3;
-    align-self: center;
-    justify-self: center;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-  }
-
-  .app.revealed .aspect-filters {
-    position: relative !important;
-    grid-column: 1;
-    grid-row: 3;
-    align-self: start;
-    justify-self: center;
-    margin-top: -65px !important;
-    left: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-  }
-
-  .app.revealed .status {
-    display: none !important;
   }
 
   /* Right-hand Sidebar stacks on Tablet */
@@ -1797,6 +1710,13 @@ button,input{
     height: auto !important;
   }
 
+  html.chart-active, body.chart-active {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    position: fixed;
+  }
+
   .app {
     height: auto !important;
     min-height: 100vh;
@@ -1805,6 +1725,20 @@ button,input{
     align-items: center;
     padding: 85px 16px 120px 16px !important;
     gap: 20px;
+  }
+
+  .app.revealed {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .brand {
@@ -1884,12 +1818,14 @@ button,input{
 
   /* Mandala container & Chart on Mobile */
   .mandala {
-    position: relative !important;
-    inset: auto !important;
-    transform: none !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 45% !important;
+    transform: translate(-50%, -50%) !important;
     opacity: 0;
-    height: 0;
-    overflow: hidden;
+    width: min(92vw, 92vh) !important;
+    height: min(92vw, 92vh) !important;
+    overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
     display: none;
@@ -1898,19 +1834,12 @@ button,input{
   .mandala.on {
     display: flex !important;
     opacity: 1 !important;
-    height: auto !important;
-    width: 100% !important;
-    justify-content: center;
-    align-items: center;
-    margin: 10px 0 !important;
-    overflow: visible !important;
   }
 
   .chart {
-    width: 92vw !important;
-    height: auto !important;
-    aspect-ratio: 1 / 1;
-    max-width: 440px !important;
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
     margin: 0 auto !important;
     overflow: visible !important;
   }
@@ -2040,6 +1969,10 @@ button,input{
     justify-content: center;
     align-items: center;
     box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    border-radius: 20px !important;
+    padding: 6px 10px !important;
   }
 
   .modes.on {
@@ -2047,29 +1980,33 @@ button,input{
   }
 
   .modeBtn {
-    padding: 6px 8px !important;
-    font-size: 10px !important;
+    min-height: 44px !important; /* Touch target size */
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .status {
     display: none !important;
   }
 
-  /* Scaling down chart element sizes on mobile viewports */
+  /* Mobile visible planet styles: target 48px hit, 30px visible bubble */
   .planet {
-    width: 32px !important;
-    height: 32px !important;
+    width: 48px !important;
+    height: 48px !important;
   }
   .graha-orb {
-    width: 20px !important;
-    height: 20px !important;
+    width: 30px !important;
+    height: 30px !important;
   }
   .graha-glyph {
-    font-size: 11px !important;
+    font-size: 14px !important;
   }
   .graha-label {
     font-size: 9px !important;
-    bottom: -16px !important;
+    bottom: -20px !important;
   }
   .rashiLabel {
     font-size: 11px !important;
@@ -2095,21 +2032,21 @@ button,input{
     overflow: visible !important;
   }
 
-  /* Further scale down elements to prevent crowding on small mobile screens */
+  /* Further scale down elements to prevent crowding on small mobile screens, but protect 48px hit target */
   .planet {
-    width: 26px !important;
-    height: 26px !important;
+    width: 48px !important;
+    height: 48px !important;
   }
   .graha-orb {
-    width: 16px !important;
-    height: 16px !important;
+    width: 28px !important;
+    height: 28px !important;
   }
   .graha-glyph {
-    font-size: 9px !important;
+    font-size: 13px !important;
   }
   .graha-label {
     font-size: 8px !important;
-    bottom: -12px !important;
+    bottom: -18px !important;
   }
   .rashiLabel {
     font-size: 9px !important;
@@ -2278,3 +2215,512 @@ select:focus-visible,
   outline-offset: 3px !important;
   box-shadow: 0 0 0 3px rgba(244, 201, 120, 0.25) !important;
 }
+
+/* ==========================================================================
+   Western Premium Audience Upgrades
+   ========================================================================== */
+
+/* 1. Brand Logo Opacity Increase */
+.brand {
+  opacity: 0.9 !important;
+}
+.app.cinema .brand {
+  opacity: 0.35 !important;
+}
+
+/* 2. Clickability & Cursor for Labels */
+.rashiLabel, .nakLabel, .houseLabel {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* 3. Zodiac / Rāśi labels visual hierarchy */
+.rashiLabel {
+  text-align: center;
+  transition: opacity 0.3s ease, filter 0.3s ease, color 0.3s ease;
+}
+
+.rashiMain {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffe8b0; /* warm gold */
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 10px rgba(244, 201, 120, 0.45);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.rashiSub {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  color: #a78bfa; /* lavender/muted purple */
+  opacity: 0.55;
+  margin-top: 1px;
+  letter-spacing: 0.04em;
+  transition: opacity 0.3s ease;
+}
+
+.rashiLabel:hover .rashiMain,
+.rashiLabel.selected .rashiMain {
+  color: #ffffff !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 20px rgba(244, 201, 120, 0.6) !important;
+}
+
+.rashiLabel:hover .rashiSub,
+.rashiLabel.selected .rashiSub {
+  opacity: 0.85;
+}
+
+/* 4. Nakshatra labels visual hierarchy (thinner, dimmer, glow on hover/selected) */
+.nakLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 8px;
+  font-weight: 300;
+  color: rgba(127, 255, 242, 0.35) !important; /* soft teal */
+  letter-spacing: 0.05em;
+  opacity: 0.45;
+  transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease, font-weight 0.3s ease;
+}
+
+.nakLabel.active {
+  color: #7ffff2 !important;
+  opacity: 0.65;
+}
+
+.nakLabel.bright {
+  color: #ffe8b0 !important;
+  opacity: 0.8;
+}
+
+.nakLabel.selected,
+.nakLabel:hover {
+  opacity: 1 !important;
+  color: #7ffff2 !important;
+  text-shadow: 0 0 10px rgba(127, 255, 242, 0.85) !important;
+  font-weight: 600 !important;
+}
+
+/* 5. House labels subtle cyan/blue */
+.houseLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: rgba(127, 255, 242, 0.4) !important; /* subtle cyan */
+  font-weight: 500;
+  opacity: 0.55;
+  transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.houseLabel:hover,
+.houseLabel.bright {
+  opacity: 1 !important;
+  color: #ffe8b0 !important;
+  text-shadow: 0 0 8px rgba(244, 201, 120, 0.7) !important;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
+/* 6. Floating Side Interpretation Panel (infoPanel) */
+.infoPanel {
+  position: fixed;
+  top: 50%;
+  right: 34px;
+  transform: translateY(-50%) translateX(24px);
+  width: 320px;
+  max-height: 70vh;
+  pointer-events: auto;
+  z-index: 12;
+  opacity: 0;
+  visibility: hidden;
+  border: 1px solid rgba(244, 201, 120, 0.22);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(8, 4, 18, 0.82), rgba(36, 22, 64, 0.45));
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow, 0 20px 40px rgba(0,0,0,0.5));
+  padding: 20px;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.4s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.infoPanel.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+.infoPanelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+}
+
+.infoPanelHead h3 {
+  font-family: Georgia, serif;
+  font-size: 16px;
+  color: var(--gold, #f4c978);
+  margin: 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.closeInfoBtn {
+  background: none;
+  border: none;
+  color: var(--muted, #94a3b8);
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.closeInfoBtn:hover {
+  color: var(--gold, #f4c978);
+}
+
+.infoPanelContent {
+  overflow-y: auto;
+  max-height: calc(70vh - 65px);
+  color: #ddd2f0;
+  font-size: 13px;
+  line-height: 1.6;
+  padding-right: 4px;
+}
+
+.infoPanelContent::-webkit-scrollbar {
+  width: 3px;
+}
+
+.infoPanelContent::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.infoPlaceholder {
+  color: var(--muted, #94a3b8);
+  font-style: italic;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 13px;
+}
+
+.infoTitle {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 20px;
+  color: var(--gold, #f4c978);
+  margin-top: 5px;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 10px rgba(244, 201, 120, 0.3);
+}
+
+.infoSubtitle {
+  font-size: 11px;
+  color: #a78bfa; /* lavender */
+  margin-bottom: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.infoMetaBlock {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+
+.infoMetaRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.infoMetaRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoMetaLabel {
+  color: var(--muted, #94a3b8);
+}
+
+.infoMetaValue {
+  font-weight: 500;
+  color: #ffe8b0;
+}
+
+.infoSectionTitle {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 14px;
+  color: #ffe8b0;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+
+.infoDescription {
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.infoOccupant {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.infoOccupant:hover {
+  background: rgba(127, 255, 242, 0.06);
+  border-color: rgba(127, 255, 242, 0.18);
+  transform: translateY(-1px);
+}
+
+.infoNoOccupants {
+  color: var(--muted, #94a3b8);
+  font-style: italic;
+  font-size: 12px;
+  padding: 6px 0;
+}
+
+/* 7. Responsive overrides for infoPanel, rashiLabel, rashiSub */
+@media (min-width: 1024px) {
+  .infoPanel {
+    position: relative !important;
+    left: auto !important;
+    right: 34px !important;
+    width: 370px !important;
+    top: 90px !important;
+    height: calc(100vh - 190px) !important;
+    transform: none !important;
+    max-height: none !important;
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .nakSummary, .command, .oracleCard {
+    right: 34px !important;
+    width: 370px !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .infoPanel {
+    position: relative !important;
+    left: auto !important;
+    right: 20px !important;
+    width: 340px !important;
+    top: 90px !important;
+    height: calc(100vh - 190px) !important;
+    transform: none !important;
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 767px) {
+  .infoPanel, .nakSummary, .command {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: translate(-50%, 100%) !important; /* Slide down when hidden */
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 42vh !important;
+    max-height: 42vh !important;
+    border-radius: 24px 24px 0 0 !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    background: linear-gradient(180deg, rgba(16, 8, 32, 0.95), rgba(8, 4, 18, 0.98)) !important;
+    backdrop-filter: blur(28px) !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6) !important;
+    padding: 20px 24px 34px 24px !important;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s !important;
+    z-index: 100 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .infoPanel.visible, .nakSummary.visible, .command:not(.collapsed) {
+    transform: translate(-50%, 0) !important; /* Slide up when visible */
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .infoPanelContent {
+    max-height: calc(42vh - 75px) !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
+  }
+
+  .nakSummaryList {
+    max-height: calc(42vh - 75px) !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
+  }
+
+  .msgs {
+    height: calc(42vh - 140px) !important;
+    max-height: calc(42vh - 140px) !important;
+  }
+
+  /* Hide Sanskrit labels under zodiac name on mobile to prevent clutter */
+  .rashiSub {
+    display: none !important;
+  }
+  .rashiMain {
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .rashiMain {
+    font-size: 9px !important;
+  }
+}
+
+/* Aspect list item and container */
+.infoAspectList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.infoAspectItem {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.infoAspectItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(244, 201, 120, 0.3);
+  transform: translateY(-1px);
+}
+
+.infoAspectItem.selected {
+  background: rgba(244, 201, 120, 0.08);
+  border-color: var(--gold, #f4c978);
+  box-shadow: 0 0 10px rgba(244, 201, 120, 0.15);
+}
+
+.infoAspectItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.aspectIndicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.aspectKindLabel {
+  margin-left: auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.infoAspectSummaryText {
+  font-size: 11px;
+  color: var(--muted, #94a3b8);
+}
+
+/* Info Buttons */
+.infoBtn {
+  background: rgba(244, 201, 120, 0.06);
+  border: 1px solid rgba(244, 201, 120, 0.22);
+  border-radius: 8px;
+  color: var(--gold, #f4c978);
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.infoBtn:hover {
+  background: rgba(244, 201, 120, 0.15);
+  border-color: var(--gold, #f4c978);
+  box-shadow: 0 0 8px rgba(244, 201, 120, 0.25);
+  transform: translateY(-1px);
+}
+
+.infoBtn:active {
+  transform: translateY(0);
+}
+
+/* Aspect and Conjunction Upgrades */
+.aspectArcHitTarget {
+  pointer-events: stroke !important;
+  cursor: pointer;
+}
+
+.chart.cluster-expanded .planet:not(.expanded-member),
+.chart.cluster-expanded .lagna {
+  opacity: 0.25 !important;
+  filter: grayscale(0.6) blur(0.5px) !important;
+}
+
+.chart.cluster-expanded .planet.expanded-member {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.chart.cluster-expanded .planet.expanded-member.focused {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.planet.expanded-member .graha-label {
+  opacity: 1 !important;
+  color: #ffffff !important;
+}
+
+.infoConjunctionPlanet {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.infoConjunctionPlanet:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--gold, #f4c978) !important;
+  transform: translateX(4px);
+}
+

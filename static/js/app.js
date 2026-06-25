@@ -56,8 +56,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const nakSummaryList = document.getElementById('nakSummaryList');
     const closeNakBtn = document.getElementById('closeNakBtn');
 
+    // Info Panel elements
+    const infoPanel = document.getElementById('infoPanel');
+    const infoPanelTitle = document.getElementById('infoPanelTitle');
+    const infoPanelContent = document.getElementById('infoPanelContent');
+    const closeInfoBtn = document.getElementById('closeInfoBtn');
+
     // Close / Minimizer bindings
     document.getElementById("closeNakBtn").addEventListener("click", () => setMode("chart"));
+    if (closeInfoBtn) {
+        closeInfoBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (infoPanel) {
+                infoPanel.classList.remove("visible");
+                infoPanel.classList.add("hidden");
+            }
+        });
+    }
 
     oraclePill.addEventListener("click", () => {
         command.classList.remove("collapsed");
@@ -511,6 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             revealed = true;
                             document.querySelector('.app').classList.add('revealed');
+                            document.body.classList.add('chart-active');
                             
                             // Build mandala elements dynamically
                             buildChart();
@@ -544,6 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     oraclePill.classList.remove("hidden");
                     revealed = true;
                     document.querySelector('.app').classList.add('revealed');
+                    document.body.classList.add('chart-active');
                     
                     buildChart();
                     addAI('The mandala is revealed. Hover any graha, press <b>R</b> for Rahu, <b>M</b> for Moon, <b>A</b> for aspects, or open <b>Gochar</b>.');
@@ -925,7 +942,7 @@ function signIndexForHouse(houseNumber) {
             const houseNum = houseForSignIndex(i);
             const startAngle = i * 30;
             const endAngle = (i + 1) * 30;
-            const d = createWedgePath(400, 400, 88, 240, startAngle, endAngle);
+            const d = createWedgePath(400, 400, 88, 300, startAngle, endAngle);
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", d);
             path.setAttribute("class", "houseWedge");
@@ -933,20 +950,27 @@ function signIndexForHouse(houseNumber) {
             path.setAttribute("data-sign-index", i);
 
             path.addEventListener('mouseenter', () => {
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) return;
                 highlightHouseOnly(houseNum);
             });
             path.addEventListener('mouseleave', () => {
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) return;
                 clearSectorHighlightsOnly();
             });
-            path.addEventListener('click', () => {
+            path.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) {
+                    resetView();
+                }
                 clearSectorHighlights();
                 highlightHouse(houseNum);
+                updateInfoPanel('house', { houseNum: houseNum });
             });
 
             gHouses.appendChild(path);
         }
 
-        // 2. Render Rashi wedges (outer ring: 240 to 344)
+        // 2. Render Rashi wedges (outer ring: 300 to 350)
         let gWedges = document.getElementById('rashiWedges');
         if (!gWedges) {
             gWedges = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -960,7 +984,7 @@ function signIndexForHouse(houseNumber) {
         for (let i = 0; i < 12; i++) {
             const startAngle = i * 30;
             const endAngle = (i + 1) * 30;
-            const d = createWedgePath(400, 400, 240, 344, startAngle, endAngle);
+            const d = createWedgePath(400, 400, 300, 350, startAngle, endAngle);
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", d);
             path.setAttribute("class", "rashiWedge");
@@ -971,12 +995,18 @@ function signIndexForHouse(houseNumber) {
             path.setAttribute("data-house", houseNum);
 
             path.addEventListener('mouseenter', () => {
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) return;
                 highlightRashiSectorOnly(i);
             });
             path.addEventListener('mouseleave', () => {
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) return;
                 clearSectorHighlightsOnly();
             });
-            path.addEventListener('click', () => {
+            path.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) {
+                    resetView();
+                }
                 highlightRashiSector(i, rashis[i]);
             });
 
@@ -1122,13 +1152,22 @@ function signIndexForHouse(houseNumber) {
         const startAngle = idx * nakSize;
         const endAngle = (idx + 1) * nakSize;
 
-        highlightSector(startAngle, endAngle, 360, 396, "cyan-wedge");
+        highlightSector(startAngle, endAngle, 350, 380, "cyan-wedge");
+
+        const activeNakIndices = new Set(
+            state.placements.map(g => getNakshatraIndex(g.nakshatra)).filter(i => i !== -1)
+        );
 
         document.querySelectorAll('.nakLabel').forEach(l => {
             if (l.dataset.name === NAKSHATRA_SHORT_NAMES[idx] || l.dataset.name === NAKSHATRA_FULL_NAMES[idx]) {
                 l.classList.add('bright');
+                l.style.display = ''; // Strongly reveal the selected one on mobile
             } else {
                 l.classList.remove('bright');
+                // Hide other inactive nakshatras on mobile
+                if (window.innerWidth < 768 && state.currentMode !== 'nak' && !activeNakIndices.has(parseInt(l.dataset.index))) {
+                    l.style.display = 'none';
+                }
             }
         });
     }
@@ -1138,8 +1177,23 @@ function signIndexForHouse(houseNumber) {
         if (g) {
             g.querySelectorAll('.cyan-wedge').forEach(w => w.remove());
         }
+        
+        const activeNakIndices = new Set(
+            state.placements.map(g => getNakshatraIndex(g.nakshatra)).filter(i => i !== -1)
+        );
+
         document.querySelectorAll('.nakLabel').forEach(l => {
             l.classList.remove('bright');
+            // Restore progressive disclosure on mobile
+            if (window.innerWidth < 768 && state.currentMode !== 'nak') {
+                if (!activeNakIndices.has(parseInt(l.dataset.index))) {
+                    l.style.display = 'none';
+                } else {
+                    l.style.display = '';
+                }
+            } else {
+                l.style.display = '';
+            }
         });
     }
 
@@ -1166,7 +1220,7 @@ function signIndexForHouse(houseNumber) {
             }
             const isWordActive = activeNakIndices.has(i);
             
-            const r = 0.445; // Centered between nakshatraR (0.43) and outerR (0.46)
+            const r = 0.456; // Centered inside outer Nakshatra ring (r1-r2 zone)
             const angle = i * nakSize + nakSize / 2;
             const p = localXY(angle, r);
             
@@ -1194,10 +1248,180 @@ function signIndexForHouse(houseNumber) {
                 l.classList.add('bright');
             }
             
+            // Hide inactive labels on mobile to avoid overcrowding
+            if (width < 768 && mode !== 'all' && !isWordActive) {
+                l.style.display = 'none';
+            }
+            
             chart.appendChild(l);
+
+            l.addEventListener('click', () => {
+                clearNakshatraHighlights();
+                highlightNakshatra(NAKSHATRA_FULL_NAMES[i]);
+                updateInfoPanel('nakshatra', { name: NAKSHATRA_FULL_NAMES[i] });
+            });
         }
     }
 
+
+    function computeConjunctionClusters() {
+        const placements = state.placements.filter(p => p.name !== "Lagna");
+        const clusters = [];
+        const visited = new Set();
+
+        for (let i = 0; i < placements.length; i++) {
+            const p1 = placements[i];
+            if (visited.has(p1.name)) continue;
+
+            const currentCluster = [p1];
+            visited.add(p1.name);
+
+            for (let j = 0; j < placements.length; j++) {
+                if (i === j) continue;
+                const p2 = placements[j];
+                if (visited.has(p2.name)) continue;
+
+                const diff = Math.abs(p1.absolute_longitude - p2.absolute_longitude);
+                const angularDistance = diff > 180 ? 360 - diff : diff;
+
+                if (angularDistance <= 6.5) {
+                    currentCluster.push(p2);
+                    visited.add(p2.name);
+                }
+            }
+
+            if (currentCluster.length > 1) {
+                clusters.push(currentCluster);
+            }
+        }
+        return clusters;
+    }
+
+    function updatePlanetPositions() {
+        const isTransit = (state.currentMode === "transit");
+        let offsetAngleVal = 0;
+        if (isTransit) {
+            const knob = document.querySelector('.knob');
+            if (knob) {
+                const knobLeft = parseFloat(knob.style.left) || 38;
+                offsetAngleVal = (knobLeft / 100 - 0.38) * 60;
+            }
+        }
+
+        state.placements.forEach(g => {
+            if (!g.el) return;
+
+            let finalAngle = g.absolute_longitude + (g.name === "Lagna" ? 0 : offsetAngleVal);
+            let finalRadius = g.staggerRadius || 0.27;
+
+            if (g.cluster && g.name !== "Lagna") {
+                const N = g.cluster.length;
+                const idx = g.cluster.indexOf(g);
+                
+                const firstAngle = g.cluster[0].absolute_longitude;
+                let sum = 0;
+                g.cluster.forEach(pl => {
+                    let diff = pl.absolute_longitude - firstAngle;
+                    if (diff > 180) diff -= 360;
+                    if (diff < -180) diff += 360;
+                    sum += diff;
+                });
+                let centerAngle = firstAngle + (sum / N) + offsetAngleVal;
+                
+                const isExpanded = (state.expandedCluster === g.cluster);
+                let angleOffset = 0;
+                let rOffset = 0;
+                
+                if (!isExpanded) {
+                    if (N === 2) {
+                        angleOffset = (idx === 0) ? -2.2 : 2.2;
+                    } else if (N === 3) {
+                        angleOffset = (idx === 0) ? 0 : (idx === 1) ? -3.5 : 3.5;
+                        rOffset = (idx === 0) ? -0.015 : 0.015;
+                    } else {
+                        if (idx === 0) { angleOffset = 0; rOffset = 0; }
+                        else if (idx === 1) { angleOffset = -4.5; rOffset = 0.02; }
+                        else if (idx === 2) { angleOffset = 4.5; rOffset = 0.02; }
+                        else if (idx === 3) { angleOffset = 0; rOffset = 0.035; }
+                        else { angleOffset = (idx % 2 === 0 ? 5 : -5); rOffset = -0.02; }
+                    }
+                } else {
+                    if (N === 2) {
+                        angleOffset = (idx === 0) ? -6 : 6;
+                        rOffset = (idx === 0) ? -0.025 : 0.025;
+                    } else if (N === 3) {
+                        angleOffset = (idx === 0) ? 0 : (idx === 1) ? -8 : 8;
+                        rOffset = (idx === 0) ? -0.035 : 0.035;
+                    } else {
+                        if (idx === 0) { angleOffset = 0; rOffset = -0.02; }
+                        else if (idx === 1) { angleOffset = -9.5; rOffset = 0.04; }
+                        else if (idx === 2) { angleOffset = 9.5; rOffset = 0.04; }
+                        else if (idx === 3) { angleOffset = 0; rOffset = 0.075; }
+                        else { angleOffset = (idx % 2 === 0 ? 10 : -10); rOffset = -0.045; }
+                    }
+                }
+
+                finalAngle = centerAngle + angleOffset;
+                finalRadius = 0.25 + rOffset;
+            }
+
+            const p = localXY(finalAngle, finalRadius);
+            g.el.style.left = p.x + '%';
+            g.el.style.top = p.y + '%';
+        });
+    }
+
+    function updateTethers() {
+        const svg = document.getElementById('chartOverlay');
+        let gTethers = document.getElementById('conjunctionTethers');
+        if (!gTethers) {
+            gTethers = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gTethers.setAttribute("id", "conjunctionTethers");
+            const gArcs = document.getElementById('aspectArcs');
+            if (gArcs) {
+                svg.insertBefore(gTethers, gArcs);
+            } else {
+                svg.appendChild(gTethers);
+            }
+        }
+        gTethers.innerHTML = '';
+
+        const isTransit = (state.currentMode === "transit");
+        let offsetAngleVal = 0;
+        if (isTransit) {
+            const knob = document.querySelector('.knob');
+            if (knob) {
+                const knobLeft = parseFloat(knob.style.left) || 38;
+                offsetAngleVal = (knobLeft / 100 - 0.38) * 60;
+            }
+        }
+
+        state.placements.forEach(g => {
+            if (!g.el || g.name === "Lagna") return;
+            if (!g.cluster) return;
+
+            const exactP = localXY(g.absolute_longitude + offsetAngleVal, 0.25);
+            const exactX = exactP.x * 8;
+            const exactY = exactP.y * 8;
+
+            const visX = parseFloat(g.el.style.left) * 8;
+            const visY = parseFloat(g.el.style.top) * 8;
+
+            const dist = Math.hypot(visX - exactX, visY - exactY);
+            if (dist > 5) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", exactX);
+                line.setAttribute("y1", exactY);
+                line.setAttribute("x2", visX);
+                line.setAttribute("y2", visY);
+                line.setAttribute("stroke", g.color);
+                line.setAttribute("stroke-width", "1");
+                line.setAttribute("stroke-dasharray", "3 3");
+                line.setAttribute("opacity", "0.4");
+                gTethers.appendChild(line);
+            }
+        });
+    }
 
     function clearAspectArcs() {
         if (state.aspectTimeouts) {
@@ -1225,16 +1449,16 @@ function signIndexForHouse(houseNumber) {
     const g = state.placements.find(p => p.name === name);
     if (!g) return { x: 400, y: 400 };
 
-    // Safe normalized orbital radii (matches 192 to 240 orbit zone)
+    // Safe normalized orbital radii (staggered between 0.23 and 0.27 orbit zone)
     const defaultRadius =
-        name === "Lagna" ? 0.25 :
-        (name === "Rahu" || name === "Ketu") ? 0.27 :
-        0.29;
+        name === "Lagna" ? 0.23 :
+        (name === "Rahu" || name === "Ketu") ? 0.25 :
+        0.27;
 
     let r = Number(g.staggerRadius);
 
     // If staggerRadius is missing, NaN, or suspiciously large, ignore it.
-    if (!Number.isFinite(r) || r < 0.15 || r > 0.35) {
+    if (!Number.isFinite(r) || r < 0.12 || r > 0.32) {
         r = defaultRadius;
     }
 
@@ -1636,26 +1860,40 @@ function signIndexForHouse(houseNumber) {
         path.style.opacity = defaultOpacity;
         path.dataset.defaultOpacity = defaultOpacity;
         
-        path.addEventListener('mouseenter', (e) => {
+        parentGroup.appendChild(path);
+
+        // Invisible wider hit target for easy interaction on desktop & mobile
+        const hitPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        hitPath.setAttribute("class", "aspectArcHitTarget");
+        hitPath.setAttribute("d", `M ${pt1.x} ${pt1.y} Q ${cx} ${cy} ${pt2.x} ${pt2.y}`);
+        hitPath.setAttribute("stroke", "transparent");
+        hitPath.setAttribute("stroke-width", "18"); // wide hit target
+        hitPath.setAttribute("fill", "none");
+        hitPath.setAttribute("pointer-events", "stroke");
+        hitPath.style.cursor = "pointer";
+        
+        hitPath.addEventListener('mouseenter', (e) => {
             if (state.lockedAspectId) return;
             state.hoveredAspectId = aspect.id;
             highlightAspectContext(aspect);
             showAspectTooltip(aspect, e);
+            path.classList.add("hovered");
         });
         
-        path.addEventListener('mouseleave', () => {
+        hitPath.addEventListener('mouseleave', () => {
             if (state.lockedAspectId) return;
             state.hoveredAspectId = null;
             clearAspectContext();
             hideAspectTooltip();
+            path.classList.remove("hovered");
         });
         
-        path.addEventListener('click', (e) => {
+        hitPath.addEventListener('click', (e) => {
             e.stopPropagation();
             focusAspect(aspect.id);
         });
 
-        parentGroup.appendChild(path);
+        parentGroup.appendChild(hitPath);
         
         // Add emission flare at source if not conjunction
         if (aspect.aspectKind !== "conjunction") {
@@ -1802,6 +2040,7 @@ function signIndexForHouse(houseNumber) {
         applyAspectFilterStyles();
         
         showAspectExplanationInCard(aspect);
+        updateInfoPanel('aspect', aspect);
     }
     
     function unlockAspect() {
@@ -2011,14 +2250,14 @@ function signIndexForHouse(houseNumber) {
             gSectors.innerHTML = '';
         }
 
-        // Draw 12 Rashi sectors (from r=240 to r=368 in 800x800 space)
+        // Draw 12 Rashi sectors (from r=300 to r=380 in 800x800 space)
         for (let i = 0; i < 12; i++) {
             const deg = i * 30;
             const a = (deg - 90) * Math.PI / 180;
-            const x1 = 400 + Math.cos(a) * 240;
-            const y1 = 400 + Math.sin(a) * 240;
-            const x2 = 400 + Math.cos(a) * 368;
-            const y2 = 400 + Math.sin(a) * 368;
+            const x1 = 400 + Math.cos(a) * 300;
+            const y1 = 400 + Math.sin(a) * 300;
+            const x2 = 400 + Math.cos(a) * 380;
+            const y2 = 400 + Math.sin(a) * 380;
 
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", x1);
@@ -2029,15 +2268,15 @@ function signIndexForHouse(houseNumber) {
             gSectors.appendChild(line);
         }
 
-        // Draw 27 Nakshatra sectors (from r=344 to r=368)
+        // Draw 27 Nakshatra sectors (from r=350 to r=380)
         const nakSize = 360 / 27;
         for (let i = 0; i < 27; i++) {
             const deg = i * nakSize;
             const a = (deg - 90) * Math.PI / 180;
-            const x1 = 400 + Math.cos(a) * 344;
-            const y1 = 400 + Math.sin(a) * 344;
-            const x2 = 400 + Math.cos(a) * 368;
-            const y2 = 400 + Math.sin(a) * 368;
+            const x1 = 400 + Math.cos(a) * 350;
+            const y1 = 400 + Math.sin(a) * 350;
+            const x2 = 400 + Math.cos(a) * 380;
+            const y2 = 400 + Math.sin(a) * 380;
 
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", x1);
@@ -2057,6 +2296,12 @@ function signIndexForHouse(houseNumber) {
 
         // Hard repair bridge: dummy data and real API data become the same visual schema.
         state.placements = state.placements.map(normalizePlacement).filter(Boolean);
+
+        // Precompute conjunction clusters
+        state.activeClusters = computeConjunctionClusters();
+        state.placements.forEach(p => {
+            p.cluster = state.activeClusters.find(c => c.some(member => member.name === p.name)) || null;
+        });
 
         console.table(state.placements.map(p => ({
             name: p.name,
@@ -2108,11 +2353,21 @@ function signIndexForHouse(houseNumber) {
 
         // 2. Draw 12 Rashi labels & house labels
         for (let i = 0; i < 12; i++) {
-            // Rashi label positioned at r = 0.405 (centered inside rashiR-nakshatraR zone)
-            const p = localXY(i * 30 + 15, 0.405);
+            // Rashi label positioned at r = 0.406 (centered inside rashiR-nakshatraR zone)
+            const p = localXY(i * 30 + 15, 0.406);
             const l = document.createElement('div');
             l.className = 'rashiLabel';
-            l.textContent = rashis[i];
+            
+            const rashiMain = document.createElement('div');
+            rashiMain.className = 'rashiMain';
+            rashiMain.textContent = SIGN_ORDER[i];
+            l.appendChild(rashiMain);
+            
+            const rashiSub = document.createElement('div');
+            rashiSub.className = 'rashiSub';
+            rashiSub.textContent = rashis[i];
+            l.appendChild(rashiSub);
+
             l.style.left = p.x + '%';
             l.style.top = p.y + '%';
             
@@ -2136,13 +2391,17 @@ function signIndexForHouse(houseNumber) {
             
             chart.appendChild(l);
             
-            l.addEventListener("click", () => {
+            l.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) {
+                    resetView();
+                }
                 highlightRashiSector(i, rashis[i]);
             });
 
-            // House label positioned at r = 0.34 (centered inside houseR-rashiR zone)
+            // House label positioned at r = 0.16 (centered inside inner house area)
             const houseNum = houseForSignIndex(i);
-            const hPos = localXY(i * 30 + 15, 0.34);
+            const hPos = localXY(i * 30 + 15, 0.16);
             const hl = document.createElement('div');
             hl.className = 'houseLabel';
             hl.dataset.house = houseNum;
@@ -2160,6 +2419,16 @@ function signIndexForHouse(houseNumber) {
                 setTimeout(() => { hl.style.opacity = 0.4; }, 50);
             }
             chart.appendChild(hl);
+
+            hl.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (state.hoveredAspectId || state.lockedAspectId || state.focusedGraha) {
+                    resetView();
+                }
+                clearSectorHighlights();
+                highlightHouse(houseNum);
+                updateInfoPanel('house', { houseNum: houseNum });
+            });
         }
 
         // 3. Render all 27 Nakshatra labels around the chart
@@ -2170,8 +2439,8 @@ function signIndexForHouse(houseNumber) {
 
         // Resolve staggering coordinates for close planets (matches orbitR to houseR planet zone)
         state.placements.forEach(p => {
-            p.staggerRadius = (p.name === 'Lagna') ? 0.25 : 
-                              (p.name === 'Rahu' || p.name === 'Ketu') ? 0.27 : 0.29;
+            p.staggerRadius = (p.name === 'Lagna') ? 0.23 : 
+                              (p.name === 'Rahu' || p.name === 'Ketu') ? 0.25 : 0.27;
             p.labelOffsetY = 0;
         });
 
@@ -2186,8 +2455,8 @@ function signIndexForHouse(houseNumber) {
                 
                 if (angularDistance < 8 && Math.abs(p1.staggerRadius - p2.staggerRadius) < 0.01) {
                     staggerCount++;
-                    p2.staggerRadius -= 0.02 * staggerCount; // stagger inward
-                    if (p2.staggerRadius < 0.24) p2.staggerRadius = 0.24; // cap at 0.24 orbit boundary
+                    p2.staggerRadius -= 0.015 * staggerCount; // stagger inward
+                    if (p2.staggerRadius < 0.19) p2.staggerRadius = 0.19; // cap at 0.19 orbit boundary
                     p2.labelOffsetY = 14 * staggerCount;
                 }
             }
@@ -2300,22 +2569,62 @@ function signIndexForHouse(houseNumber) {
             g.el = el;
 
             el.addEventListener('mouseenter', () => {
+                if (g.cluster) {
+                    state.expandedCluster = g.cluster;
+                    chart.classList.add('cluster-expanded');
+                    state.placements.forEach(pl => {
+                        if (pl.el) {
+                            if (g.cluster.some(member => member.name === pl.name)) {
+                                pl.el.classList.add('expanded-member');
+                            } else {
+                                pl.el.classList.remove('expanded-member');
+                            }
+                        }
+                    });
+                    updatePlanetPositions();
+                    updateTethers();
+                }
                 showCard(g);
                 highlightGrahaContext(g);
             });
             el.addEventListener('mouseleave', () => {
+                if (g.cluster) {
+                    state.expandedCluster = null;
+                    chart.classList.remove('cluster-expanded');
+                    document.querySelectorAll('.planet').forEach(pl => pl.classList.remove('expanded-member'));
+                    updatePlanetPositions();
+                    updateTethers();
+                }
                 clearGrahaContext();
             });
-            el.addEventListener('click', () => {
-                focusGraha(g.name);
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (g.cluster) {
+                    if (state.expandedCluster === g.cluster && chart.classList.contains('cluster-expanded')) {
+                        focusGraha(g.name);
+                    } else {
+                        state.expandedCluster = g.cluster;
+                        chart.classList.add('cluster-expanded');
+                        state.placements.forEach(pl => {
+                            if (pl.el) {
+                                if (g.cluster.some(member => member.name === pl.name)) {
+                                    pl.el.classList.add('expanded-member');
+                                } else {
+                                    pl.el.classList.remove('expanded-member');
+                                }
+                            }
+                        });
+                        updatePlanetPositions();
+                        updateTethers();
+                        updateInfoPanel('conjunction', g.cluster);
+                    }
+                } else {
+                    focusGraha(g.name);
+                }
             });
 
             if (isResize) {
                 el.style.transition = 'none';
-                const r = g.staggerRadius || 0.29;
-                const p = localXY(targetAngle, r);
-                el.style.left = p.x + '%';
-                el.style.top = p.y + '%';
                 el.style.opacity = 1;
                 el.style.transform = 'translate(-50%, -50%) scale(1)';
             } else {
@@ -2331,15 +2640,6 @@ function signIndexForHouse(houseNumber) {
                                        top 2.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + idx * 150}ms, 
                                        opacity 1.8s ease ${400 + idx * 150}ms, 
                                        transform 1.8s ease ${400 + idx * 150}ms`;
-
-                setTimeout(() => {
-                    const r = g.staggerRadius || 0.29;
-                    const p = localXY(targetAngle, r);
-                    el.style.left = p.x + '%';
-                    el.style.top = p.y + '%';
-                    el.style.opacity = 1;
-                    el.style.transform = 'translate(-50%, -50%) scale(1)';
-                }, 100);
             }
         });
 
@@ -2349,6 +2649,23 @@ function signIndexForHouse(houseNumber) {
             const axis = document.getElementById('nodeAxis');
             axis.style.transform = `translate(-50%,-50%) rotate(${rahu.absolute_longitude + offsetAngle}deg)`;
             axis.classList.add('on');
+        }
+
+        // Call positions update after elements are appended
+        if (!isResize) {
+            setTimeout(() => {
+                updatePlanetPositions();
+                updateTethers();
+                state.placements.forEach(pl => {
+                    if (pl.el) {
+                        pl.el.style.opacity = 1;
+                        pl.el.style.transform = 'translate(-50%, -50%) scale(1)';
+                    }
+                });
+            }, 100);
+        } else {
+            updatePlanetPositions();
+            updateTethers();
         }
     }
 
@@ -2524,6 +2841,16 @@ function signIndexForHouse(houseNumber) {
         state.lockedAspectId = null;
         state.hoveredGraha = null;
         
+        state.expandedCluster = null;
+        chart.classList.remove('cluster-expanded');
+        document.querySelectorAll('.planet').forEach(pl => pl.classList.remove('expanded-member'));
+        updatePlanetPositions();
+        updateTethers();
+
+        if (typeof updateInfoPanel === "function") {
+            updateInfoPanel('none');
+        }
+        
         if (state.currentMode === 'aspect') {
             state.aspectFilter = 'core';
             document.querySelectorAll('#aspectFilters .filter-chip').forEach(c => {
@@ -2607,6 +2934,7 @@ function signIndexForHouse(houseNumber) {
 
         status.innerHTML = `<b>${g.name} Focus</b><br/>${g.sign} (${g.rashi}), ${g.nakshatra} Pada ${g.pada}, House ${g.house}. ${g.interpretation}`;
         addAI(`Focus locked on <b>${g.name}</b>. ${g.interpretation}`);
+        updateInfoPanel('graha', g);
     }
 
     function focusCluster(type) {
@@ -2780,6 +3108,9 @@ function signIndexForHouse(houseNumber) {
 
             updateOracleFocusHeader("Aspect Lines Map", "Dṛṣṭi Coordinate Links");
             status.innerHTML = '<b>Aspect Mode</b><br/>Luminous aspects draw coordinates connections between grahas.';
+            if (window.HARD_CODED_ASPECTS) {
+                updateInfoPanel('aspect_list', window.HARD_CODED_ASPECTS);
+            }
         } 
         else if (mode === "transit") {
             timeline.classList.add('on');
@@ -2806,8 +3137,8 @@ function signIndexForHouse(houseNumber) {
     }
 
     function highlightNakshatraWedge(startAngle, endAngle, wedgeClass) {
-        // Nakshatra ring spans radius 360 to 396
-        highlightSector(startAngle, endAngle, 360, 396, wedgeClass);
+        // Nakshatra ring spans radius 350 to 380
+        highlightSector(startAngle, endAngle, 350, 380, wedgeClass);
     }
 
     function clearWedges() {
@@ -2885,9 +3216,10 @@ function signIndexForHouse(houseNumber) {
         });
 
         // Inject highlight wedge into SVG
-        highlightSector(index * 30, (index + 1) * 30, 250, 396, "gold-violet");
+        highlightSector(index * 30, (index + 1) * 30, 300, 350, "gold-violet");
 
         appendOracleMessage("oracle", `Analyzing Rāśi sector: ${name} (${signName}). Directing energy bounds.`);
+        updateInfoPanel('zodiac', { name: signName, index: index });
     }
 
 
@@ -2919,16 +3251,8 @@ function signIndexForHouse(houseNumber) {
         
         // Rotate planets slightly based on pct to simulate transit movement
         const offsetAngle = (pct - 0.38) * 60; // 38% is natal base position
-        const planetsData = state.placements.filter(p => p.name !== "Lagna");
-        
-        planetsData.forEach((g, idx) => {
-            if (g.el) {
-                const r = g.staggerRadius || ((g.name === 'Rahu' || g.name === 'Ketu') ? 0.25 : 0.275);
-                const p = localXY(g.absolute_longitude + offsetAngle, r);
-                g.el.style.left = p.x + '%';
-                g.el.style.top = p.y + '%';
-            }
-        });
+        updatePlanetPositions();
+        updateTethers();
         
         const rahu = state.placements.find(p => p.name === 'Rahu');
         if (rahu) {
@@ -3128,6 +3452,7 @@ function signIndexForHouse(houseNumber) {
                 e.stopPropagation();
                 clearSectorHighlights();
                 highlightHouse(g.house);
+                updateInfoPanel('house', { houseNum: g.house });
             });
             chipsContainer.appendChild(houseChip);
             
@@ -3139,6 +3464,7 @@ function signIndexForHouse(houseNumber) {
                 e.stopPropagation();
                 clearNakshatraHighlights();
                 highlightNakshatra(g.nakshatra);
+                updateInfoPanel('nakshatra', { name: g.nakshatra });
             });
             chipsContainer.appendChild(nakChip);
             
@@ -3150,6 +3476,7 @@ function signIndexForHouse(houseNumber) {
                 e.stopPropagation();
                 clearNakshatraHighlights();
                 highlightNakshatra(g.nakshatra);
+                updateInfoPanel('nakshatra', { name: g.nakshatra });
             });
             chipsContainer.appendChild(padaChip);
             
@@ -3215,6 +3542,534 @@ function signIndexForHouse(houseNumber) {
 
     function addYou(text) {
         appendOracleMessage('you', text);
+    }
+
+    function resetView() {
+        resetFocus();
+    }
+
+    // --- Western Premium Observatory Panel mappings and rendering ---
+    const ZODIAC_DETAILS = {
+        "Aries": {
+            sanskrit: "Meṣa",
+            element: "Fire (Agni)",
+            modality: "Cardinal (Chara)",
+            ruler: "Mars",
+            vedic: "The head of the cosmic man. Represents initiation, pioneering force, physical vitality, and direct action.",
+            modern: "Assertive, initiating, courageous, competitive, independent, and swift to act."
+        },
+        "Taurus": {
+            sanskrit: "Vṛṣabha",
+            element: "Earth (Prithvi)",
+            modality: "Fixed (Sthira)",
+            ruler: "Venus",
+            vedic: "The face of the cosmic man. Governs speech, resources, stability, family roots, and steady growth.",
+            modern: "Reliable, aesthetic, patient, practical, material security-oriented, and sensual."
+        },
+        "Gemini": {
+            sanskrit: "Mithuna",
+            element: "Air (Vayu)",
+            modality: "Dual (Dvisvabhava)",
+            ruler: "Mercury",
+            vedic: "The shoulders and arms of the cosmic man. Governs dualities, communications, intellect, and exploration.",
+            modern: "Adaptable, communicative, intellectual, dual-minded, curious, and witty."
+        },
+        "Cancer": {
+            sanskrit: "Karka",
+            element: "Water (Jala)",
+            modality: "Cardinal (Chara)",
+            ruler: "Moon",
+            vedic: "The chest and heart of the cosmic man. Governs emotional foundations, intuition, home, motherly care, and devotion.",
+            modern: "Nurturing, intuitive, protective, family-oriented, emotional, and security-seeking."
+        },
+        "Leo": {
+            sanskrit: "Siṃha",
+            element: "Fire (Agni)",
+            modality: "Fixed (Sthira)",
+            ruler: "Sun",
+            vedic: "The solar plexus of the cosmic man. Governs authority, soul purpose, vital strength, leadership, and royalty.",
+            modern: "Expressive, creative, natural leader, generous, proud, and warm-hearted."
+        },
+        "Virgo": {
+            sanskrit: "Kanyā",
+            element: "Earth (Prithvi)",
+            modality: "Dual (Dvisvabhava)",
+            ruler: "Mercury",
+            vedic: "The abdomen of the cosmic man. Governs precision, analytical capacity, healing, service, and daily work.",
+            modern: "Analytical, helpful, precise, health-conscious, detail-oriented, and systematic."
+        },
+        "Libra": {
+            sanskrit: "Tulā",
+            element: "Air (Vayu)",
+            modality: "Cardinal (Chara)",
+            ruler: "Venus",
+            vedic: "The lower back/pelvis of the cosmic man. Governs balance, relationships, public interaction, trade, and harmony.",
+            modern: "Diplomatic, relationship-focused, artistic, balance-seeking, social, and harmonious."
+        },
+        "Scorpio": {
+            sanskrit: "Vṛścika",
+            element: "Water (Jala)",
+            modality: "Fixed (Sthira)",
+            ruler: "Mars",
+            vedic: "The generative organs of the cosmic man. Governs depth, secrets, hidden research, crisis, and deep transformation.",
+            modern: "Intense, transformative, investigative, emotionally powerful, private, and resilient."
+        },
+        "Sagittarius": {
+            sanskrit: "Dhanu",
+            element: "Fire (Agni)",
+            modality: "Dual (Dvisvabhava)",
+            ruler: "Jupiter",
+            vedic: "The thighs of the cosmic man. Governs higher knowledge, philosophy, righteousness (dharma), and spiritual paths.",
+            modern: "Optimistic, philosophical, freedom-loving, generous, seeker of truth, and adventurous."
+        },
+        "Capricorn": {
+            sanskrit: "Makara",
+            element: "Earth (Prithvi)",
+            modality: "Cardinal (Chara)",
+            ruler: "Saturn",
+            vedic: "The knees of the cosmic man. Governs structure, public status, duty, patience, and karmic limits.",
+            modern: "Ambitious, structured, responsible, patient, practical, and long-term oriented."
+        },
+        "Aquarius": {
+            sanskrit: "Kumbha",
+            element: "Air (Vayu)",
+            modality: "Fixed (Sthira)",
+            ruler: "Saturn",
+            vedic: "The shins and ankles of the cosmic man. Governs networks, gains, collective vision, gains, and humanitarian service.",
+            modern: "Innovative, humanitarian, independent, collective-oriented, unique, and intellectual."
+        },
+        "Pisces": {
+            sanskrit: "Mīna",
+            element: "Water (Jala)",
+            modality: "Dual (Dvisvabhava)",
+            ruler: "Jupiter",
+            vedic: "The feet of the cosmic man. Governs liberation (moksha), solitude, sleep, dreams, and spiritual release.",
+            modern: "Intuitive, compassionate, spiritual, imaginative, artistic, and boundaryless."
+        }
+    };
+
+    const GRAHA_SANSKRIT = {
+        "Lagna": "Lagna / Ascendant",
+        "Sun": "Sūrya",
+        "Moon": "Chandra",
+        "Mars": "Maṅgala",
+        "Mercury": "Budha",
+        "Jupiter": "Guru / Bṛhaspati",
+        "Venus": "Śukra",
+        "Saturn": "Śani",
+        "Rahu": "Rāhu",
+        "Ketu": "Ketu"
+    };
+
+    const HOUSE_DETAILS = {
+        1: {
+            title: "House of Self (Tanu Bhāva)",
+            theme: "Identity, physical body, appearance, general health, life path, and initial self-expression."
+        },
+        2: {
+            title: "House of Wealth (Dhana Bhāva)",
+            theme: "Financial resources, family upbringing, speech, food habits, values, and accumulation."
+        },
+        3: {
+            title: "House of Courage (Sahaja Bhāva)",
+            theme: "Willpower, brothers/siblings, communication, writing, short journeys, hobbies, and manual skills."
+        },
+        4: {
+            title: "House of Roots (Bandhu Bhāva)",
+            theme: "Home environment, mother, emotional peace, land/vehicles, and happiness."
+        },
+        5: {
+            title: "House of Intellect (Putra Bhāva)",
+            theme: "Creativity, intelligence, past-life merits (purva-punya), children, romance, and spiritual practices."
+        },
+        6: {
+            title: "House of Service (Ari Bhāva)",
+            theme: "Daily work, health/debts, service, obstacles, competition, and victory over adversaries."
+        },
+        7: {
+            title: "House of Union (Yuvati Bhāva)",
+            theme: "Partnerships, marriage, spouse, business relationships, and public interactions."
+        },
+        8: {
+            title: "House of Transformation (Randhra Bhāva)",
+            theme: "Longevity, secrets, hidden occult knowledge, sudden events, inheritance, and deep psychology."
+        },
+        9: {
+            title: "House of Dharma (Dharma Bhāva)",
+            theme: "Righteousness, philosophy, religion, higher education, father, teachers, and fortune."
+        },
+        10: {
+            title: "House of Career (Karma Bhāva)",
+            theme: "Profession, public standing, authority, career status, achievements, and social contribution."
+        },
+        11: {
+            title: "House of Gains (Lābha Bhāva)",
+            theme: "Incoming wealth, goals, networks, elder siblings, friends, and social ambitions."
+        },
+        12: {
+            title: "House of Liberation (Vyaya Bhāva)",
+            theme: "Subconscious mind, foreign travel, solitude, losses, dreams, and spiritual release."
+        }
+    };
+
+    const NAKSHATRA_DETAILS = {
+        "Aśvinī": { lord: "Ketu", deity: "Ashvins (Divine Physicians)", theme: "Swift action, healing power, pioneering spirit, and initiation of projects." },
+        "Bharaṇī": { lord: "Venus", deity: "Yama (God of Death/Duty)", theme: "Intensity, purification, birth, death, transformation, and self-restraint." },
+        "Kṛttikā": { lord: "Sun", deity: "Agni (God of Fire)", theme: "Sharpness, purification, critics, direct energy, and cutting away obstacles." },
+        "Rohiṇī": { lord: "Moon", deity: "Brahma (Creator)", theme: "Creativity, fertility, growth, commerce, beauty, and emotional expression." },
+        "Mṛgaśīrṣa": { lord: "Mars", deity: "Soma (God of Nectar/Moon)", theme: "Searching, curiosity, hunting for truth, travel, and research." },
+        "Ārdrā": { lord: "Rahu", deity: "Rudra (God of Storms)", theme: "Clash, storms, tears, radical restructuring, and emotional release." },
+        "Punarvasu": { lord: "Jupiter", deity: "Aditi (Cosmic Mother)", theme: "Renewal, return of light, optimism, charity, and recovery of lost items." },
+        "Puṣya": { lord: "Saturn", deity: "Brihaspati (Teacher of Gods)", theme: "Nourishment, care, protection, wisdom, ritual, and spiritual devotion." },
+        "Āśleṣā": { lord: "Mercury", deity: "Sarpas (Serpents)", theme: "Intense focus, kundalini energy, wisdom, deception, and protective boundaries." },
+        "Maghā": { lord: "Ketu", deity: "Pitris (Ancestral Spirits)", theme: "Regal power, ancestral inheritance, history, pride, and authority." },
+        "Pūrva Phalgunī": { lord: "Venus", deity: "Bhaga (God of Prosperity)", theme: "Art, play, relaxation, relationships, romance, and sensory enjoyment." },
+        "Uttara Phalgunī": { lord: "Sun", deity: "Aryaman (God of Patronage)", theme: "Friendship, service, long-term contracts, society, and help to others." },
+        "Hasta": { lord: "Moon", deity: "Savitr (Solar Deity of Sunrise)", theme: "Dexterity, craft, skills with hands, cleverness, and mental agility." },
+        "Citrā": { lord: "Mars", deity: "Vishvakarma (Divine Architect)", theme: "Brilliance, dynamic architecture, styling, beauty, and artistic design." },
+        "Svātī": { lord: "Rahu", deity: "Vayu (God of Wind)", theme: "Independence, flexibility, dispersion, travel, and gentle movement." },
+        "Viśākhā": { lord: "Jupiter", deity: "Indra & Agni (Alliance of Power)", theme: "Ambition, branching focus, competitive drive, and dual goals." },
+        "Anurādhā": { lord: "Saturn", deity: "Mitra (God of Friendship)", theme: "Loyalty, devotion, alliances, social networks, and research." },
+        "Jyeṣṭhā": { lord: "Mercury", deity: "Indra (King of Gods)", theme: "Seniority, pride, occult mastery, protecting territory, and elder status." },
+        "Mūla": { lord: "Ketu", deity: "Nirriti (Goddess of Dissolution)", theme: "Root exploration, destruction, uprooting illusions, and deep research." },
+        "Pūrva Āṣāḍhā": { lord: "Venus", deity: "Apas (Water Goddess)", theme: "Invincibility, purification, declaration, declaration, and hydration." },
+        "Uttara Āṣāḍhā": { lord: "Sun", deity: "Vishvadevas (Universal Gods)", theme: "Victory, righteousness, cosmic law, long-term goal focus, and dedication." },
+        "Śravaṇa": { lord: "Moon", deity: "Vishnu (Preserver)", theme: "Listening, learning, oral tradition, focus on research, and reception." },
+        "Dhaniṣṭhā": { lord: "Mars", deity: "Eight Vasus (Elemental Deities)", theme: "Rhythm, music, material prosperity, fame, and courage." },
+        "Śatabhiṣaj": { lord: "Rahu", deity: "Varuna (God of Cosmic Waters)", theme: "Healing, 100 physicians, mystery, isolation, and universal order." },
+        "Pūrva Bhādrapadā": { lord: "Jupiter", deity: "Aja Ekapada (One-footed Goat/Storm Deity)", theme: "Fire, spiritual intensity, sacrifice, double-edged personality, and transformation." },
+        "Uttara Bhādrapadā": { lord: "Saturn", deity: "Ahirbudhnya (Serpent of Deep Depths)", theme: "Deep wisdom, stability, compassion, dream states, and steady execution." },
+        "Revatī": { lord: "Mercury", deity: "Pushan (Protector of Travelers)", theme: "Gentle guidance, spiritual journeying, animals, transitions, and completion." }
+    };
+
+    function updateInfoPanel(type, data) {
+        if (!infoPanel || !infoPanelContent || !infoPanelTitle) return;
+
+        // Toggle visibility
+        infoPanel.classList.remove("hidden");
+        infoPanel.classList.add("visible");
+
+        // Clear active/selected classes on all chart labels
+        document.querySelectorAll('.rashiLabel, .nakLabel, .houseLabel').forEach(el => {
+            el.classList.remove('selected');
+        });
+
+        let html = "";
+        let titleText = "Observatory Info";
+
+        if (type === "none") {
+            titleText = "Your Vedic Observatory";
+            html = `
+                <div class="infoPlaceholder">
+                    <p>Click a planet, zodiac sign, house, or nakshatra to reveal its meaning.</p>
+                </div>
+            `;
+        } 
+        else if (type === "zodiac") {
+            const englishName = data.name;
+            const index = data.index;
+            const details = ZODIAC_DETAILS[englishName] || {};
+            const houseNum = houseForSignIndex(index);
+            const occupied = state.placements.filter(p => p.sign === englishName);
+
+            titleText = `${englishName} Sign`;
+
+            // Highlight label visually
+            const rashiLbls = document.querySelectorAll('.rashiLabel');
+            if (rashiLbls[index]) {
+                rashiLbls[index].classList.add('selected');
+            }
+
+            let occupiedHtml = occupied.length > 0
+                ? occupied.map(p => `
+                    <div class="infoOccupant" data-name="${p.name}">
+                        <strong>${p.name}</strong> 
+                        <span style="color: var(--muted);">${p.degree_label || formatDegreeLabel(p.sign_degree)}</span>
+                    </div>
+                `).join('')
+                : '<div class="infoNoOccupants">No planets in this sign at birth.</div>';
+
+            html = `
+                <div class="infoTitle">${englishName} · ${details.sanskrit || ""}</div>
+                <div class="infoSubtitle">Zodiac Sign</div>
+                <div class="infoMetaBlock">
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Ruling Planet</span><span class="infoMetaValue">${details.ruler || ""}</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Element</span><span class="infoMetaValue">${details.element || ""}</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Modality</span><span class="infoMetaValue">${details.modality || ""}</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Activated House</span><span class="infoMetaValue">House ${houseNum}</span></div>
+                </div>
+                
+                <div class="infoSectionTitle">Vedic Meaning (Jyotiṣa)</div>
+                <p class="infoDescription">${details.vedic || ""}</p>
+                
+                <div class="infoSectionTitle">Modern Psychology</div>
+                <p class="infoDescription">${details.modern || ""}</p>
+                
+                <div class="infoSectionTitle">Occupants at Birth</div>
+                <div class="infoOccupantsList">${occupiedHtml}</div>
+            `;
+        }
+        else if (type === "conjunction") {
+            const cluster = data || [];
+            const first = cluster[0] || {};
+            const houseNum = first.house;
+            const signName = first.sign;
+            const sanskritSign = first.rashi;
+            
+            titleText = `Conjunction`;
+            
+            let occupantsHtml = cluster.map(p => `
+                <div class="infoOccupant infoConjunctionPlanet" data-name="${p.name}">
+                    <span class="conjunctionPlanetGlyph" style="color: ${p.color}; font-size: 16px; font-weight: bold;">${p.glyph}</span>
+                    <div style="flex: 1;">
+                        <strong style="font-size: 14px; color: #fff;">${p.name}</strong>
+                        <div style="font-size: 11px; color: var(--muted);">${p.degree_label || formatDegreeLabel(p.sign_degree)} in ${p.sign} · ${p.nakshatra} P${p.pada}</div>
+                    </div>
+                    <span style="font-size: 12px; color: var(--gold); font-weight: bold;">Focus →</span>
+                </div>
+            `).join('');
+
+            html = `
+                <div class="infoTitle">Planetary Conjunction</div>
+                <div class="infoSubtitle">${cluster.length} celestial bodies aligned in ${signName}</div>
+                <div class="infoMetaBlock">
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Zodiac Sign</span><span class="infoMetaValue">${signName} (${sanskritSign})</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">House Placement</span><span class="infoMetaValue">House ${houseNum}</span></div>
+                </div>
+                
+                <div class="infoSectionTitle">Vedic Conjunction</div>
+                <p class="infoDescription">
+                    When multiple planets cluster within a narrow zodiacal band (under 6 degrees), their energies merge and color one another. This conjunction intensifies the themes of House ${houseNum} and ${signName}.
+                </p>
+                
+                <div class="infoSectionTitle">Conjoining Planets</div>
+                <div class="infoOccupantsList" style="margin-top: 10px;">
+                    ${occupantsHtml}
+                </div>
+            `;
+        }
+        else if (type === "graha") {
+            const g = data;
+            const sanskritName = GRAHA_SANSKRIT[g.name] || g.name;
+            const suffix = ["st", "nd", "rd", "th", "th", "th", "th", "th", "th", "th", "th", "th"][g.house - 1] || "th";
+
+            titleText = `${g.name} Focus`;
+
+            html = `
+                <div class="infoTitle">${g.name} · ${sanskritName}</div>
+                <div class="infoSubtitle">${g.role || "Planetary Node"}</div>
+                <div class="infoMetaBlock">
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Longitude</span><span class="infoMetaValue">${g.degree_label || formatDegreeLabel(g.sign_degree)} in ${g.sign}</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">House Placement</span><span class="infoMetaValue">House ${g.house} (${suffix})</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Nakshatra</span><span class="infoMetaValue">${g.nakshatra} (Pada ${g.pada})</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Nakshatra Lord</span><span class="infoMetaValue">${g.nakshatra_lord || "N/A"}</span></div>
+                    ${g.retrograde ? `<div class="infoMetaRow"><span class="infoMetaLabel">Status</span><span class="infoMetaValue" style="color: #ff5d67; font-weight: 600;">Retrograde</span></div>` : ""}
+                </div>
+                
+                <div class="infoSectionTitle">Observatory Interpretation</div>
+                <p class="infoDescription">${g.interpretation || "No interpretation available."}</p>
+            `;
+        }
+        else if (type === "house") {
+            const houseNum = data.houseNum;
+            const details = HOUSE_DETAILS[houseNum] || {};
+            const signIndex = signIndexForHouse(houseNum);
+            const signName = SIGN_ORDER[signIndex];
+            const sanskritSign = rashis[signIndex];
+            const occupied = state.placements.filter(p => parseInt(p.house) === parseInt(houseNum));
+
+            titleText = `House ${houseNum}`;
+
+            // Highlight label visually
+            document.querySelectorAll('.houseLabel').forEach(hl => {
+                if (parseInt(hl.dataset.house) === parseInt(houseNum)) {
+                    hl.classList.add('bright');
+                }
+            });
+
+            let occupiedHtml = occupied.length > 0
+                ? occupied.map(p => `
+                    <div class="infoOccupant" data-name="${p.name}">
+                        <strong>${p.name}</strong> 
+                        <span style="color: var(--muted);">${p.degree_label || formatDegreeLabel(p.sign_degree)}</span>
+                    </div>
+                `).join('')
+                : '<div class="infoNoOccupants">No planets in this house.</div>';
+
+            html = `
+                <div class="infoTitle">House ${houseNum}</div>
+                <div class="infoSubtitle">${details.title || ""}</div>
+                <div class="infoMetaBlock">
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Zodiac Sign</span><span class="infoMetaValue">${signName} (${sanskritSign})</span></div>
+                </div>
+                
+                <div class="infoSectionTitle">House Themes</div>
+                <p class="infoDescription">${details.theme || ""}</p>
+                
+                <div class="infoSectionTitle">Occupants at Birth</div>
+                <div class="infoOccupantsList">${occupiedHtml}</div>
+            `;
+        }
+        else if (type === "nakshatra") {
+            const nakName = data.name;
+            const details = NAKSHATRA_DETAILS[nakName] || { lord: "N/A", deity: "N/A", theme: "N/A" };
+            const occupied = state.placements.filter(p => p.nakshatra === nakName);
+
+            titleText = `${nakName}`;
+
+            // Highlight label visually
+            document.querySelectorAll('.nakLabel').forEach(l => {
+                if (l.dataset.name === nakName) {
+                    l.classList.add('selected');
+                }
+            });
+
+            let occupiedHtml = occupied.length > 0
+                ? occupied.map(p => `
+                    <div class="infoOccupant" data-name="${p.name}">
+                        <strong>${p.name}</strong> 
+                        <span style="color: var(--muted);">${p.degree_label || formatDegreeLabel(p.sign_degree)}</span>
+                    </div>
+                `).join('')
+                : '<div class="infoNoOccupants">No planets in this nakshatra.</div>';
+
+            html = `
+                <div class="infoTitle">${nakName}</div>
+                <div class="infoSubtitle">Lunar Mansion (Nakshatra)</div>
+                <div class="infoMetaBlock">
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Lord / Planetary Ruler</span><span class="infoMetaValue">${details.lord}</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Ruling Deity</span><span class="infoMetaValue">${details.deity}</span></div>
+                </div>
+                
+                <div class="infoSectionTitle">Stellar Theme</div>
+                <p class="infoDescription">${details.theme}</p>
+                
+                <div class="infoSectionTitle">Planets inside at Birth</div>
+                <div class="infoOccupantsList">${occupiedHtml}</div>
+            `;
+        }
+        else if (type === "aspect") {
+            const aspect = data;
+            titleText = aspect.label || "Vedic Aspect";
+
+            // Highlight the corresponding aspect line visually
+            document.querySelectorAll('.aspectArc').forEach(a => {
+                if (a.getAttribute('data-id') === aspect.id) {
+                    a.classList.add('hovered');
+                } else {
+                    a.classList.remove('hovered');
+                }
+            });
+
+            html = `
+                <div class="infoTitle">${aspect.label}</div>
+                <div class="infoSubtitle">${aspect.aspectKind.toUpperCase()} aspect · Strength ${aspect.strength || "Full"}</div>
+                <div class="infoMetaBlock">
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Source Planet</span><span class="infoMetaValue">${aspect.from}</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Target</span><span class="infoMetaValue">${aspect.targetType === "graha" ? aspect.to : `House ${aspect.targetHouse}`}</span></div>
+                    <div class="infoMetaRow"><span class="infoMetaLabel">Target Sign</span><span class="infoMetaValue">${aspect.targetSign}</span></div>
+                </div>
+                
+                <div class="infoSectionTitle">Vedic Aspect Meaning</div>
+                <p class="infoDescription">${aspect.description || "No description available."}</p>
+                
+                <div class="infoSectionTitle">Interactive Controls</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                    <button class="infoBtn" id="aspectGoToFrom" data-from="${aspect.from}">Focus Source</button>
+                    ${aspect.targetType === "graha" ? `<button class="infoBtn" id="aspectGoToTo" data-to="${aspect.to}">Focus Target</button>` : `<button class="infoBtn" id="aspectGoToHouse" data-house="${aspect.targetHouse}">Focus House ${aspect.targetHouse}</button>`}
+                    <button class="infoBtn" id="aspectBackToList">Back to Aspect List</button>
+                </div>
+            `;
+        }
+        else if (type === "aspect_list") {
+            titleText = "Vedic Aspects (Dṛṣṭi)";
+            const aspects = data || [];
+            
+            let aspectItemsHtml = aspects.length > 0
+                ? aspects.map(a => {
+                    const isSelected = state.lockedAspectId === a.id ? "selected" : "";
+                    const targetStr = a.targetType === "graha" ? a.to : `H${a.targetHouse}`;
+                    return `
+                        <div class="infoAspectItem ${isSelected}" data-id="${a.id}">
+                            <div class="infoAspectItemHeader">
+                                <span class="aspectIndicator" style="background-color: ${a.color};"></span>
+                                <strong>${a.from} ➔ ${targetStr}</strong>
+                                <span class="aspectKindLabel">${a.aspectKind}</span>
+                            </div>
+                            <div class="infoAspectSummaryText">${a.label}</div>
+                        </div>
+                    `;
+                }).join('')
+                : '<div class="infoNoOccupants">No active aspects computed.</div>';
+
+            html = `
+                <div class="infoTitle">Active Vedic Aspects</div>
+                <div class="infoSubtitle">Geometric glances of planetary influences</div>
+                <p class="infoDescription" style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">
+                    In Vedic astrology, planets cast aspect (dṛṣṭi) across the zodiac. Selecting an aspect highlights its cosmic path.
+                </p>
+                <div class="infoAspectList">
+                    ${aspectItemsHtml}
+                </div>
+            `;
+        }
+
+        infoPanelTitle.textContent = titleText;
+        infoPanelContent.innerHTML = html;
+
+        // Bind clicks to dynamically generated occupant chips
+        infoPanelContent.querySelectorAll('.infoOccupant').forEach(occ => {
+            occ.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pName = occ.getAttribute('data-name');
+                if (pName) focusGraha(pName);
+            });
+        });
+
+        // Bind aspect list item clicks
+        infoPanelContent.querySelectorAll('.infoAspectItem').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const aspectId = item.getAttribute('data-id');
+                if (aspectId) {
+                    focusAspect(aspectId);
+                }
+            });
+        });
+
+        // Bind aspect detail buttons
+        const goToFrom = infoPanelContent.querySelector('#aspectGoToFrom');
+        if (goToFrom) {
+            goToFrom.addEventListener('click', (e) => {
+                e.stopPropagation();
+                focusGraha(goToFrom.getAttribute('data-from'));
+            });
+        }
+        const goToTo = infoPanelContent.querySelector('#aspectGoToTo');
+        if (goToTo) {
+            goToTo.addEventListener('click', (e) => {
+                e.stopPropagation();
+                focusGraha(goToTo.getAttribute('data-to'));
+            });
+        }
+        const goToHouse = infoPanelContent.querySelector('#aspectGoToHouse');
+        if (goToHouse) {
+            goToHouse.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearSectorHighlights();
+                highlightHouse(goToHouse.getAttribute('data-house'));
+            });
+        }
+        const backToList = infoPanelContent.querySelector('#aspectBackToList');
+        if (backToList) {
+            backToList.addEventListener('click', (e) => {
+                e.stopPropagation();
+                unlockAspect();
+                if (window.HARD_CODED_ASPECTS) {
+                    updateInfoPanel('aspect_list', window.HARD_CODED_ASPECTS);
+                }
+            });
+        }
     }
 
     function resetView() {

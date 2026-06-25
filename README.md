@@ -1,33 +1,27 @@
-# Pratyabhijna (प्रत्यभिज्ञा)
+# Pratyabhijna (प्रत्यभिज्ञा) — Immersive Vedic Observatory
 
-An immersive, Vedic-only cinematic Jyotiṣa (astrology) experience. Pratyabhijna is Sanskrit for "recognition" — the recognition of one's deeper nature through the alignment of stellar coordinates at the moment of birth.
-
-This web application deviates from standard dashboard formats to provide an occult, cinematic, full-screen spiritual encounter centered on a circular sidereal sky mandala.
+Pratyabhijna (Sanskrit for "recognition" or "remembrance") is an immersive, cinematic, Vedic-only astronomical and astrological (Jyotiṣa) observatory interface. It departs from standard, dry dashboard layouts to offer an occult, interactive, full-screen spiritual encounter centered on a circular sidereal sky mandala.
 
 ---
 
 ## 🌌 Core Features
 
-1. **Cosmic Entry Form**: A glassmorphic entry gate asking for Date, Time, and Place of Birth to calibrate coordinates.
-2. **Sequential Cinematic Reveal**:
-   - Fades out birth details.
-   - Triggers sequential staging chants ("Scorpio Lagna rises...", "Nakshatras calculated...", "Grahas settling...").
-   - Reveals the full-screen Jyotiṣa Mandala.
+1. **CesiumJS Cosmic Entry**: A cinematic 3D Earth globe that starts in deep space. When birth details are entered, the camera flies to the geocoded birth coordinates, spawns a sacred golden marker and a cyan light beam, and then fades out into the mandala.
+2. **Sequential Cinematic Staging**: During coordinate calculations, the UI triggers staging titles ("Scorpio Lagna rises...", "Nakshatras calculated...", "Grahas settling...") to build anticipation.
 3. **Cosmic Settling Transition**: On load, planetary nodes start from deep space orbits (random radii and angles) and transition smoothly (using CSS transitions) into their exact sidereal longitudes.
 4. **Interactive Jyotiṣa Mandala**:
-   - Displays 12 Sanskrit rāśis (Meṣa through Mīna).
-   - Displays 27 stellar Nakshatras (every other labeled to maintain clean styling).
-   - Draws a glowing rose Rahu-Ketu karmic axis.
-   - Interactive hover cards and click-locks for planets (grahas).
-   - Dynamic collision avoidance spacing for planets sharing the same sign.
-5. **Six Visual Modes (Bottom Bar)**:
-   - **Rāśi**: Default view showing signs and nodes.
+   - Renders 12 Sanskrit rāśis (Meṣa through Mīna) and 27 stellar Nakshatras.
+   - Dynamic Rahu-Ketu karmic axis (glowing rose axis line).
+   - Collision-avoidance spacing that staggers the radius of planets occupying the same house or sign.
+   - Interactive hover cards and click-locks for planets (grahas) and aspects.
+5. **Six Visual Modes**:
+   - **Rāśi (Default)**: Visualizes the 12 signs, houses, and planet placements.
    - **Nakshatra**: Highlights the 27 stellar divisions and dims Rashis.
-   - **Rahu-Ketu**: Dims everything except the north and south node axis.
-   - **Aspects**: Draws structural geometric aspects (e.g. Moon-Saturn, Sun-Mercury, etc.).
-   - **Timeline**: Displays Vimshottari Dasha cycles and transits (Gochar).
-   - **Table**: Shows a calculation sheet displaying raw signs, degrees, Nakshatras, Padas, lords, and chart roles.
-6. **Oracle Chat**: An integrated glass panel that interprets keyboard commands or typed queries (e.g., "Moon", "Saturn", "12th", "aspects").
+   - **Aspects**: Draws structural geometric Vedic aspects (dṛṣṭi) between planets and houses.
+   - **Gochar (Transit)**: Overlays current planetary positions calculated at UTC now.
+   - **Dasha**: Visualizes Vimshottari Dasha cycles on a temporal timeline.
+   - **Table**: Shows exact calculations (degrees, nakshatras, padas, lords).
+6. **Oracle Chat Panel**: A glassmorphic console that accepts text queries (e.g. "Moon", "Saturn", "aspects") to focus the mandala, trigger modes, and describe spiritual themes.
 7. **Celestial Keyboard Shortcuts**:
    - `/`: Focus Oracle Chat
    - `M`: Focus Moon
@@ -36,91 +30,127 @@ This web application deviates from standard dashboard formats to provide an occu
    - `K`: Focus Ketu
    - `A`: Toggle Aspect mode
    - `N`: Toggle Nakshatra mode
-   - `T`: Toggle Timeline mode
+   - `T`: Toggle Gochar/Timeline mode
    - `Esc`: Reset focus and view modes
 
 ---
 
-## 🛠️ Tech Stack & Requirements
+## ⚙️ Technical Architecture & Data Flow
 
-- **Backend**: Python 3, Flask
-- **Frontend**: Vanilla CSS, Vanilla HTML, Canvas (Animated starfield, drifting particles, breathing radial aura), SVG (Interactive charts)
-- **Dependencies**: Listed in `requirements.txt` (only Flask is needed for MVP calculation mockups).
+```mermaid
+sequenceDiagram
+    participant User as Web Browser (Frontend)
+    participant Server as Flask Server (app.py)
+    participant Geocoder as Geopy (Nominatim)
+    participant Ephemeris as Swiss Ephemeris / Pure-Python
+
+    User->>Server: POST /api/chart/calculate {dob, tob, pob, ayanamsha}
+    Server->>Geocoder: Geocode Place of Birth (pob)
+    Geocoder-->>Server: Latitude, Longitude, resolved place name
+    Server->>Server: Resolve Timezone (timezonefinder)
+    Server->>Server: Convert local datetime to UTC & Julian Day (jd_ut)
+    Server->>Ephemeris: Calculate placements (jd_ut, lat, lon)
+    Ephemeris-->>Server: Placements (longitude, speed, house, sign)
+    Server->>Server: Enrich placements (Nakshatra, Pada, interpretations)
+    Server->>Server: Compute Vedic aspects (dṛṣṭi) & Vimshottari Dashas
+    Server-->>User: JSON Response {placements, aspects, dasha, metadata}
+```
+
+### 1. Backend Layer (`python`)
+- **Flask Server (`app.py`)**: Defines routes, processes calculation requests, serves the Oracle backend, and handles fallback logic if API services or calculations fail.
+- **Geocoding & Timezones**:
+  - `pratyabhijna/geocode.py`: Geocodes places using `geopy` (Nominatim) with an in-memory cache for common locations (`Kathmandu`, `Wichita`, `Ujjain`).
+  - `pratyabhijna/time_utils.py`: Resolves timezones with `timezonefinder` and converts local time to UTC and Julian Day.
+- **Ephemeris Calculations (`pratyabhijna/ephemeris.py`)**:
+  - Tries Swiss Ephemeris (`pyswisseph`) first for high-accuracy calculations.
+  - Falls back to `pratyabhijna/pure_ephem.py` (a pure-Python geocentric model using VSOP87/Meeus algorithms) if binary packages are unavailable.
+- **Vedic Calculations (`pratyabhijna/vedic.py` / `pratyabhijna/jyotisha.py`)**:
+  - Maps longitudes to 12 signs (Rāśis) and 27 Nakshatras.
+  - Computes whole-sign houses relative to the Lagna.
+- **Vedic Aspects (`pratyabhijna/aspects.py`)**:
+  - Computes conjunctions (grahas sharing a house).
+  - Computes dṛṣṭi (standard 7th aspect, special aspects for Mars, Jupiter, Saturn, Rahu, and Ketu).
+- **Dasha Engine (`pratyabhijna/dasha.py`)**:
+  - Calculates the Vimshottari Dasha (120-year cycle) starting lord and balance at birth.
+- **Interpretations (`pratyabhijna/interpretations.py`)**:
+  - Generates dynamic texts for placements.
+
+### 2. Frontend Layer (`HTML / CSS / JS`)
+- **CesiumJS Globe (`static/js/cesiumEarthScene.js`)**:
+  - Renders a 3D dark-styled rotating Earth.
+  - Transitions to a fly-in zoom, displays pulsing rings, and fades away on mandala reveal.
+- **Interactive Mandala SVG (`static/js/app.js`)**:
+  - Dynamically draws SVG circles, radial sectors, aspect lines (curved arcs), and node markers.
+  - Implements collision-avoidance staggering to move overlapping planets inward or outward.
+  - Implements the Oracle command interpreter, keyboard shortcuts, and responsive panels.
+- **Styling (`static/css/style.css`)**:
+  - Dark mode with glassmorphic cards, cyan glows, and typography based on Google Fonts (`Cinzel` for headers, `Inter` for body).
 
 ---
 
-## 📁 Project Structure
+## 📁 Directory Structure
 
 ```text
-pratyabhijna/
+PRATYABHIJNA/
 │
-├── app.py                  # Main Flask application and Oracle backend
-├── requirements.txt        # Backend dependencies
-├── README.md               # Documentation
+├── app.py                      # Main Flask web application & API endpoints
+├── requirements.txt            # Python backend dependencies
+├── README.md                   # Project documentation & Edit Log (this file)
 │
-├── pratyabhijna/
-│   ├── __init__.py         # Package initialization
-│   ├── data.py             # Raw placements and color/glow values
-│   ├── jyotisha.py         # Nakshatra, Pada, and absolute longitude calculation math
-│   └── interpretations.py  # Canned Jyotiṣa interpretations
+├── pratyabhijna/               # Vedic Jyotisha Engine (Python modules)
+│   ├── __init__.py             # Package declaration
+│   ├── data.py                 # Static D1 fallback data
+│   ├── jyotisha.py             # Basic calculations & metadata enrichment
+│   ├── pure_ephem.py           # Pure-Python planetary calculations (fallback)
+│   ├── ephemeris.py            # Unified Swiss Ephemeris vs. Pure-Python selector
+│   ├── time_utils.py           # Time conversion, Julian Day, & timezone resolution
+│   ├── geocode.py              # Geocoding wrapper using Geopy
+│   ├── aspects.py              # Vedic aspects (dṛṣṭi) and conjunctions logic
+│   ├── dasha.py                # Vimshottari Dasha calculation engine
+│   ├── interpretations.py      # Dynamic interpretation generator
+│   └── vedic.py                # Core constants (signs, nakshatras, lords, glyphs)
 │
 ├── templates/
-│   └── index.html          # Main HTML structure and SVG layout
+│   └── index.html              # HTML markup, SVG overlays, and CDN imports
 │
-└── static/
+└── static/                     # Frontend static assets
     ├── css/
-    │   └── style.css       # Visual system styles (glassmorphism, radial auras, glows)
-    ├── js/
-    │   └── app.js          # Starfield animation loop, SVG rendering, click events, hotkeys
-    └── assets/             # Media and images directory (empty for now)
+    │   └── style.css           # Styling (Glassmorphism, glows, layout)
+    └── js/
+        ├── app.js              # SVG rendering, collision-avoidance, hotkeys, Oracle
+        ├── aspects.js          # Predefined visual aspect configurations
+        ├── cesiumEarthScene.js # CesiumJS 3D Earth rendering and fly-to animation
+        └── earthScene.js       # Three.js old procedural earth scene (unused backup)
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-Ensure you have Python installed, then execute the following:
-
-### 1. Set Up Environment & Install Dependencies
-
-Using `pip`:
+### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
-
-Or using `uv` (recommended):
-```bash
-uv pip install -r requirements.txt
-```
+*Note: Swiss Ephemeris (`pyswisseph`) is optional. If it fails to compile/install, the application will automatically fall back to the built-in pure-Python ephemeris module.*
 
 ### 2. Start the Server
 ```bash
 python app.py
 ```
 
-Open your browser and navigate to `http://127.0.0.1:5000/` to enter the Cosmic Gate.
+### 3. Open the Application
+Navigate to `http://127.0.0.1:5000/` in your browser.
 
 ---
 
-## 🌎 3D Earth High-Quality Textures Guide
+## 📝 Edit History & Version Log
 
-The application uses procedural textures generated dynamically via HTML5 Canvas (which runs 100% locally and offline without external asset dependencies). However, for a production-grade look, you can drop high-resolution textures into the asset directory.
+Every edit to the project documentation or codebase must be recorded below with a timestamp, version number, and description of the changes made.
 
-### Texture Placements:
-Save your texture images inside `static/assets/textures/` using the following names:
-1. **Earth Map**: `earth_color.jpg` (2K/4K Equirectangular projection)
-2. **Bump/Normal Map**: `earth_bump.jpg` (for continental terrain depth)
-3. **Clouds Map**: `earth_clouds.png` (transparent PNG for cloud layers)
-4. **Night Lights**: `earth_lights.jpg` (to add glowing cities on the dark side of the globe)
-
-### How to Enable:
-Modify `static/js/earthScene.js` inside `initEarthScene()` to replace:
-```javascript
-const earthTex = createProceduralEarthTexture();
-```
-with:
-```javascript
-const textureLoader = new THREE.TextureLoader();
-const earthTex = textureLoader.load("/static/assets/textures/earth_color.jpg");
-```
-And load the bump, cloud, and light maps accordingly.
+| Version | Timestamp | Description of Changes |
+| :--- | :--- | :--- |
+| v1.0.0 | 2026-06-25T00:15:00-05:00 | Initial comprehensive project analysis, architecture documentation, directory structure description, and context dump. |
+| v1.1.0 | 2026-06-25T00:26:33-05:00 | Upgraded the Pratyabhijna chart UI for a Western premium audience (English zodiac labels primarily, secondary Sanskrit names, visual hierarchy updates, responsive upgrades, bottom control renaming, and side interpretation panel). |
+| v1.2.0 | 2026-06-25T00:43:00-05:00 | Upgraded Pratyabhijna chart to a full-screen observatory: widened concentric ring radii, scaled up the chart container dynamically to `min(92vw, 92vh)` across viewports, added support for `aspect` and `aspect_list` within the info panel with interactive focus controls, implemented mobile slide-up bottom sheets for `.infoPanel`, `.nakSummary` and `.command` modules, and optimized touch targets to meet 44px height standards with wrapping controls. |
+| v1.2.1 | 2026-06-25T00:50:00-05:00 | Centered chart/mandala absolutely on desktop and tablet viewports relative to the entire screen, allowing the right-hand panel, bottom controls (timeline, modes, aspect-filters), and status indicators to float gracefully as overlays. |
+| v1.2.2 | 2026-06-25T01:05:00-05:00 | Upgraded planet nodes to glowing, 3D-shaded celestial bodies with 48px hit targets across viewports, implemented conjunction staggered clustering with dotted exact-longitude tethers, added hover/click conjunction expansions with a bottom-sheet panel listing members, and resolved aspect line click/hover ambiguities by enabling pointer-events stroke on the aspect hit targets and ignoring background sector hovers while focused. |

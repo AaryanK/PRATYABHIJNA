@@ -110,11 +110,11 @@
                     </defs>
                     <!-- Concentric Rings in SVG space sharing exact center (400, 400) -->
                     <g id="chartRings">
-                        <circle cx="400" cy="400" r="368" class="svg-ring r1" />
-                        <circle cx="400" cy="400" r="344" class="svg-ring r2" />
-                        <circle cx="400" cy="400" r="304" class="svg-ring r3" />
-                        <circle cx="400" cy="400" r="240" class="svg-ring r4" />
-                        <circle cx="400" cy="400" r="192" class="svg-ring r5" />
+                        <circle cx="400" cy="400" r="380" class="svg-ring r1" />
+                        <circle cx="400" cy="400" r="350" class="svg-ring r2" />
+                        <circle cx="400" cy="400" r="300" class="svg-ring r3" />
+                        <circle cx="400" cy="400" r="230" class="svg-ring r4" />
+                        <circle cx="400" cy="400" r="170" class="svg-ring r5" />
                     </g>
                     <g id="focusWedges"></g>
                 </svg>
@@ -152,13 +152,26 @@
             </div>
         </div>
 
+        <!-- Floating Info / Interpretation Panel (Right side) -->
+        <div class="infoPanel glass-panel hidden" id="infoPanel">
+            <div class="infoPanelHead">
+                <h3 id="infoPanelTitle">Observatory Info</h3>
+                <button class="closeInfoBtn" id="closeInfoBtn">&times;</button>
+            </div>
+            <div class="infoPanelContent" id="infoPanelContent">
+                <div class="infoPlaceholder">
+                    <p>Click a planet, zodiac sign, house, or nakshatra to reveal its meaning.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Switcher Modes Bar -->
         <div class="modes" id="modes">
-            <button class="modeBtn active" data-mode="chart">Rāśi</button>
+            <button class="modeBtn active" data-mode="chart">Zodiac</button>
             <button class="modeBtn" data-mode="nak">Nakshatra</button>
             <button class="modeBtn" data-mode="aspect">Aspects</button>
-            <button class="modeBtn" data-mode="transit">Gochar</button>
-            <button class="modeBtn" data-mode="dasha">Dasha</button>
+            <button class="modeBtn" data-mode="transit">Transits</button>
+            <button class="modeBtn" data-mode="dasha">Life Chapter</button>
             <button class="modeBtn" data-mode="reset">Reset</button>
         </div>
 
